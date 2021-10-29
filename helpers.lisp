@@ -63,7 +63,7 @@ where OPT-ARGS is a list formatted as in `format-options'"
                  :ostream ostream
                  :mand-args '(arrows shapes decorations.markings)))
 
-(defmacro with-preamble-to-file ((filename &key packages)
+(defmacro with-preamble-to-file ((filename &key (documentclass :standalone) packages)
                                  (&rest keys &key &allow-other-keys)
                                  &body body)
   (let ((stream (gensym)))
@@ -74,6 +74,6 @@ where OPT-ARGS is a list formatted as in `format-options'"
                       :if-does-not-exist :create
                       ,@keys)
        (let ((*standard-output* ,stream))
-         (preamble :packages ,packages)
+         (preamble :packages ,packages :documentclass ,documentclass)
          (with-env (document)
              ,@body)))))

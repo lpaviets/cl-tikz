@@ -1,3 +1,6 @@
 *~
 *.fasl
 *.tex*
+*.aux
+*.log
+*.pdf

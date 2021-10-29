@@ -34,7 +34,7 @@ See `deftile' for more information"
          (declare (ignorable size))
          ,(when background
             `(with-tikz-command (fill :ostream ostream :options '((fill . ,background)))
-               (format ostream "(~a, ~a) --+ (~a, ~a)" x y size size)))
+               (format ostream "(~a, ~a) --++ (~a, ~a)" x y size size)))
          ,@body
          (format ostream "~&"))
        (tileset-add-tile-function ,tileset ,id ',fun-name)
