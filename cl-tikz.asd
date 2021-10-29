@@ -10,5 +10,6 @@
                (:file "utils")
                (:file "helpers")
                (:file "paths")
+               (:file "tileset")
                (:file "draw-tiles")
                (:file "cl-tikz")))
