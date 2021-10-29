@@ -33,8 +33,8 @@ See `deftile' for more information"
                   tileset)
          (declare (ignorable size))
          ,(when background
-            `(with-tikz-command (fill :ostream ostream :options '((fill . ,background)))
-               (format ostream "(~a, ~a) --++ (~a, ~a)" x y size size)))
+            `(with-tikz-command (fill :ostream ostream :options '(,background))
+               (format ostream "(~a, ~a) rectangle (~a, ~a)" x y (+ x size) (+ y size))))
          ,@body
          (format ostream "~&"))
        (tileset-add-tile-function ,tileset ,id ',fun-name)
