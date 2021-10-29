@@ -11,5 +11,6 @@
                (:file "helpers")
                (:file "paths")
                (:file "tileset")
-               (:file "draw-tiles")
-               (:file "cl-tikz")))
+               (:file "cl-tikz")
+               (:module "tiles"
+                :components ((:file "draw-tiles")))))
