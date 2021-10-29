@@ -4,3 +4,8 @@
 *.aux
 *.log
 *.pdf
+*.dvi
+*.fdb_latexmk
+*.fls
+/auto/
+/test-output.synctex.gz
