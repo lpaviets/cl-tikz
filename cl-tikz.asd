@@ -7,4 +7,8 @@
   :version "0.0.1"
   :serial t
   :components ((:file "package")
+               (:file "utils")
+               (:file "helpers")
+               (:file "paths")
+               (:file "draw-tiles")
                (:file "cl-tikz")))
