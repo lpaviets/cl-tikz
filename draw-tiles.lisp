@@ -23,7 +23,7 @@ on the background
 pair (symbol default-value). It will be inserted as-is in the parameter
 list of the generated function"
   (let ((fun-name (symb 'make-tile- tileset #\- id))
-        (fun-args (append '(&key (size 1) ostream) other-args)))
+        (fun-args (append '(&key (size 1) (ostream t)) other-args)))
     `(progn
        (defun ,fun-name (x y ,@fun-args)
          ,(format nil
@@ -37,12 +37,12 @@ See `deftile' for more information"
                (format ostream "(~a, ~a) --+ (~a, ~a)" x y size size)))
          ,@body
          (format ostream "~&"))
-       (tileset-add-tile-function ,tileset ,id #',fun-name)
+       (tileset-add-tile-function ,tileset ,id ',fun-name)
        ,(when rules
           `(tileset-add-rules ,tileset ,rules)))))
 
 
-(defun draw-tiling (solution tileset &key ostream other-args)
+(defun draw-tiling (solution tileset &key (ostream t) other-args)
   "Draw the tiling corresponding to SOLUTION with the tileset TILESET.
 SOLUTION is a 2D-array, each cell of which is an ID belonging to TILESET"
   (destructuring-bind (n m) (array-dimensions solution)

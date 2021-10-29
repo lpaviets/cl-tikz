@@ -1,10 +1,10 @@
 (in-package #:cl-tikz)
 
-(defun draw-rectangle (xmin ymin xmax ymax &key ostream options)
+(defun draw-rectangle (xmin ymin xmax ymax &key (ostream t) options)
   (with-tikz-command (draw :ostream ostream :options options)
     (format ostream "(~a, ~a) rectangle (~a, ~a)" xmin ymin xmax ymax)))
 
-(defun draw-square (xmin ymin &key (size 1) ostream options)
+(defun draw-square (xmin ymin &key (size 1) (ostream t) options)
   (let ((xmax (+ xmin size))
         (ymax (+ ymin size)))
     (draw-rectangle xmin ymin xmax ymax :ostream ostream :options options)))
@@ -14,7 +14,7 @@
     (format ostream "(~a, ~a) grid[step=~a] (~a, ~a)" xmin ymin step xmax ymax)))
 
 
-(defun draw-long-path (xstart ystart &key ostream options path)
+(defun draw-long-path (xstart ystart &key (ostream t) options path)
   (with-tikz-command (draw :ostream ostream :options options)
     (loop :initially (format ostream "(~a, ~a)" xstart ystart)
           :with dx = 0
