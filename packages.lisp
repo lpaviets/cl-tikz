@@ -7,7 +7,14 @@
    #:draw-rectangle
    #:draw-square
    #:draw-grid
-   #:draw-long-path))
+   #:draw-long-path
+   ;; Utilities
+   #:symb
+   #:format-options
+   #:latex-command
+   #:with-env
+   #:with-tikz-command
+   #:with-preamble-to-file))
 
 (defpackage #:cl-tikz/tiles
   (:use #:cl #:cl-tikz)
