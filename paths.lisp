@@ -1,22 +1,22 @@
 (in-package #:cl-tikz)
 
-(defun draw-rectangle (xmin ymin xmax ymax &key (ostream t) options)
-  (with-tikz-command (draw :ostream ostream :options options)
-    (format ostream " (~a, ~a) rectangle (~a, ~a)" xmin ymin xmax ymax)))
+(defun draw-rectangle (xmin ymin xmax ymax &key options)
+  (with-tikz-command (draw :options options)
+    (format t " (~a, ~a) rectangle (~a, ~a)" xmin ymin xmax ymax)))
 
-(defun draw-square (xmin ymin &key (size 1) (ostream t) options)
+(defun draw-square (xmin ymin &key (size 1) options)
   (let ((xmax (+ xmin size))
         (ymax (+ ymin size)))
-    (draw-rectangle xmin ymin xmax ymax :ostream ostream :options options)))
+    (draw-rectangle xmin ymin xmax ymax :options options)))
 
-(defun draw-grid (xmin ymin xmax ymax &key (step 1) ostream options)
-  (with-tikz-command (draw :ostream ostream :options options)
-    (format ostream " (~a, ~a) grid[step=~a] (~a, ~a)" xmin ymin step xmax ymax)))
+(defun draw-grid (xmin ymin xmax ymax &key (step 1) options)
+  (with-tikz-command (draw :options options)
+    (format t " (~a, ~a) grid[step=~a] (~a, ~a)" xmin ymin step xmax ymax)))
 
 
-(defun draw-long-path (xstart ystart path &key (ostream t) options)
-  (with-tikz-command (draw :ostream ostream :options options)
-    (loop :initially (format ostream " (~a, ~a)" xstart ystart)
+(defun draw-long-path (xstart ystart path &key options)
+  (with-tikz-command (draw :options options)
+    (loop :initially (format t " (~a, ~a)" xstart ystart)
           :with dx = 0
           :with dy = 0
           :for (dir val) :on path :by #'cddr
@@ -28,5 +28,5 @@
                ((:d :down) (setf dy (- val)))
                ((:n :node)))
              (if (member dir '(:n :node))
-                 (format ostream " -- (~a)" (to-lowercase-string val))
-                 (format ostream " --++ (~a, ~a)" dx dy)))))
+                 (format t " -- (~a)" (to-lowercase-string val))
+                 (format t " --++ (~a, ~a)" dx dy)))))

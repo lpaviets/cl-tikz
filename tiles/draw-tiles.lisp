@@ -6,9 +6,8 @@
   "Creates a function MAKE-TILE-<NAME>-<ID> which takes as arguments:
 - X, Y (mandatory arguments): the position of the tile.
 - SIZE (keyword argument): The size of the tile. Default to 1.
-- OSTREAM (keyword argument): an output stream
 Note that this makes the deftile macro anaphoric.
-Indeed, in BODY, X, Y, SIZE and OSTREAM will be captured by the generated
+Indeed, in BODY, X, Y, SIZE will be captured by the generated
 function, while the programmer never explicitly gave them as arguments.
 - OTHER-ARGS: this should be a list of keys
 
@@ -28,7 +27,7 @@ pair (symbol default-value). It will be inserted as-is in the parameter
 list of the generated function
 - BODY: the body of the generated function"
   (let ((fun-name (symb 'make-tile- name #\- id))
-        (fun-args (append '(&key (size 1) (ostream t)) other-args)))
+        (fun-args (append '(&key (size 1)) other-args)))
     `(progn
        (defun ,fun-name (x y ,@fun-args)
          ,(format nil
@@ -38,10 +37,10 @@ See `deftile' for more information"
                   tileset)
          (declare (ignorable size))
          ,(when background
-            `(with-tikz-command (fill :ostream ostream :options '(,background))
-               (format ostream "(~a, ~a) rectangle (~a, ~a)" x y (+ x size) (+ y size))))
+            `(with-tikz-command (fill :options '(,background))
+               (format t "(~a, ~a) rectangle (~a, ~a)" x y (+ x size) (+ y size))))
          ,@body
-         (format ostream "~&"))
+         (format t "~&"))
        (tileset-add-tile-function ,tileset ,id ',fun-name)
        ,(when rules
           `(tileset-add-rules ,tileset ,rules))
@@ -49,7 +48,7 @@ See `deftile' for more information"
           `(setf (aref ,tileset ,id) ,sides)))))
 
 
-(defun draw-tiling (solution tileset &key (ostream t) other-args)
+(defun draw-tiling (solution tileset &key other-args)
   "Draw the tiling corresponding to SOLUTION with the tileset TILESET.
 SOLUTION is a 2D-array, each cell of which is an ID belonging to TILESET"
   (destructuring-bind (n m) (array-dimensions solution)
@@ -57,7 +56,6 @@ SOLUTION is a 2D-array, each cell of which is an ID belonging to TILESET"
       (loop :for j :below m :do
         (let* ((tile (aref solution i j))
                (fun-tile (tileset-get-tile-function tileset tile)))
-          (apply fun-tile i j :ostream ostream other-args))))
+          (apply fun-tile i j other-args))))
     (draw-grid 0 0 m n
-               :ostream ostream
                :options '(thin))))
