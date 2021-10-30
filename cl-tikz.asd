@@ -6,11 +6,12 @@
   :license  "Specify license here"
   :version "0.0.1"
   :serial t
-  :components ((:file "package")
+  :components ((:file "packages")
                (:file "utils")
                (:file "helpers")
                (:file "paths")
                (:file "cl-tikz")
                (:module "tiles"
-                :components ((:file "tileset")
+                :components ((:file "rules")
+                             (:file "tileset")
                              (:file "draw-tiles")))))

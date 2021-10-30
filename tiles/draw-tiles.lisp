@@ -1,4 +1,4 @@
-(in-package #:cl-tikz)
+(in-package #:cl-tikz/tiles)
 
 (defmacro deftile ((tileset id &key rules)
                    (&key background other-args)
