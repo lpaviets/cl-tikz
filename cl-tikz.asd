@@ -15,4 +15,5 @@
                 :components ((:file "rules")
                              (:file "tileset")
                              (:file "draw-tiles")
+                             (:file "tiles-patterns")
                              (:file "example")))))

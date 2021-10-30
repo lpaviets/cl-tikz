@@ -14,7 +14,7 @@
     (format ostream " (~a, ~a) grid[step=~a] (~a, ~a)" xmin ymin step xmax ymax)))
 
 
-(defun draw-long-path (xstart ystart &key (ostream t) options path)
+(defun draw-long-path (xstart ystart path &key (ostream t) options)
   (with-tikz-command (draw :ostream ostream :options options)
     (loop :initially (format ostream " (~a, ~a)" xstart ystart)
           :with dx = 0

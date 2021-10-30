@@ -1,0 +1,23 @@
+(in-package #:cl-tikz/tiles)
+
+;;; Wang Tiles
+
+(defun draw-wang-tile (x y left down right up &key (size 1) (ostream t))
+  (let ((bl (format nil " (~f, ~f) " x y))
+        (br (format nil " (~f, ~f) " (+ x size) y))
+        (tl (format nil " (~f, ~f) " x (+ y size)))
+        (tr (format nil " (~f, ~f) " (+ x size) (+ y size)))
+        (center (format nil " (~f, ~f) " (+ x (/ size 2)) (+ y (/ size 2)))))
+   (with-tikz-command (fill :ostream ostream :options left)
+     (format ostream "~{~a -- ~^ cycle~}" (list tl center bl)))
+    (with-tikz-command (fill :ostream ostream :options down)
+      (format ostream "~{~a -- ~^ cycle~}" (list bl center br)))
+    (with-tikz-command (fill :ostream ostream :options right)
+      (format ostream "~{~a -- ~^ cycle~}" (list tr center br)))
+    (with-tikz-command (fill :ostream ostream :options up)
+      (format ostream "~{~a -- ~^ cycle~}" (list tl center tr)))
+    (with-tikz-command (draw :ostream ostream)
+      (format ostream "~a -- ~a" bl tr))
+    (with-tikz-command (draw :ostream ostream)
+      (format ostream "~a -- ~a" br tl))
+    (draw-square x y :size size :ostream ostream)))

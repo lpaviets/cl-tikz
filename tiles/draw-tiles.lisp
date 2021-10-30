@@ -1,9 +1,9 @@
 (in-package #:cl-tikz/tiles)
 
-(defmacro deftile ((tileset id &key rules sides)
+(defmacro deftile ((tileset id name &key rules sides)
                    (&key background other-args)
                    &body body)
-  "Creates a function MAKE-TILE-<TILESET>-<ID> which takes as arguments:
+  "Creates a function MAKE-TILE-<NAME>-<ID> which takes as arguments:
 - X, Y (mandatory arguments): the position of the tile.
 - SIZE (keyword argument): The size of the tile. Default to 1.
 - OSTREAM (keyword argument): an output stream
@@ -27,7 +27,7 @@ on the background
 pair (symbol default-value). It will be inserted as-is in the parameter
 list of the generated function
 - BODY: the body of the generated function"
-  (let ((fun-name (symb 'make-tile- tileset #\- id))
+  (let ((fun-name (symb 'make-tile- name #\- id))
         (fun-args (append '(&key (size 1) (ostream t)) other-args)))
     `(progn
        (defun ,fun-name (x y ,@fun-args)
