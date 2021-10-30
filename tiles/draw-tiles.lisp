@@ -1,6 +1,6 @@
 (in-package #:cl-tikz/tiles)
 
-(defmacro deftile ((tileset id &key rules)
+(defmacro deftile ((tileset id &key rules sides)
                    (&key background other-args)
                    &body body)
   "Creates a function MAKE-TILE-<TILESET>-<ID> which takes as arguments:
@@ -15,13 +15,18 @@ function, while the programmer never explicitly gave them as arguments.
 Other arguments to this macro are:
 - TILESET: a tileset structure. The keys are of the same type as ID, and the
 values are the functions MAKE-TILE-TILESET-ID
-- ID: a hashable unique identifier for the tile
-- BODY: the body of the generated function
+- ID: a fixnum, unique identifier for the tile, between 0 and the tileset
+size
+- RULES: a list of rules. See `add-rules' for more information.
+- SIDES: nil, or a list of length 4. In this order: left, down, right, up
+sides of the tiles (in the case of Wang tiles/SFT). Each element must be
+comparable with EQ.
 - BACKGROUND: If not nil, the tile will first be filled with this colour
 on the background
 - OTHER-ARGS: this should be a list, each element being a symbol or a
 pair (symbol default-value). It will be inserted as-is in the parameter
-list of the generated function"
+list of the generated function
+- BODY: the body of the generated function"
   (let ((fun-name (symb 'make-tile- tileset #\- id))
         (fun-args (append '(&key (size 1) (ostream t)) other-args)))
     `(progn
@@ -39,7 +44,9 @@ See `deftile' for more information"
          (format ostream "~&"))
        (tileset-add-tile-function ,tileset ,id ',fun-name)
        ,(when rules
-          `(tileset-add-rules ,tileset ,rules)))))
+          `(tileset-add-rules ,tileset ,rules))
+       ,(when sides
+          `(setf (aref ,tileset ,id) ,sides)))))
 
 
 (defun draw-tiling (solution tileset &key (ostream t) other-args)
