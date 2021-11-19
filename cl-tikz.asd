@@ -9,7 +9,7 @@
   :components ((:file "packages")
                (:file "utils")
                (:file "helpers")
-               (:file "paths")
+               (:file "shapes")
                (:file "cl-tikz")
                (:module "tiles"
                 :components ((:file "rules")
