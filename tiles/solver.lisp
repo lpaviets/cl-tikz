@@ -90,10 +90,17 @@ except in position (X Y) where it is equal to VAL"
      (setf (aref new-grid x y) val)
      new-grid)))
 
-(defun %solver-naive (tileset grid)
+(defun nshuffle (sequence)
+  (loop :for i :from (length sequence) :downto 2
+        :do (rotatef (elt sequence (random i))
+                     (elt sequence (1- i))))
+  sequence)
+
+(defun %solver-naive (tileset grid &optional random)
   (let ((empty-cell (solver-find-empty-cell grid)))
     (if empty-cell
-        (let ((valid-tiles (apply 'all-valid-tiles tileset grid empty-cell)))
+        (let* ((valid-tiles-1 (apply 'all-valid-tiles tileset grid empty-cell))
+               (valid-tiles (if random (nshuffle valid-tiles-1) valid-tiles-1)))
           (loop :for tile :in valid-tiles
                 :for new-grid = (set-grid-pos-from grid
                                                    (car empty-cell)
@@ -104,6 +111,6 @@ except in position (X Y) where it is equal to VAL"
                   :do (return-from %solver-naive result)))
         (and (solver-check tileset grid) grid))))
 
-(defun solver-naive (tileset dims)
+(defun solver-naive (tileset dims &optional random)
   (let ((grid (make-array dims :initial-element nil)))
-    (%solver-naive tileset grid)))
+    (%solver-naive tileset grid random)))
