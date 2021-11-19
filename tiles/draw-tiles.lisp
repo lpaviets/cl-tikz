@@ -65,7 +65,7 @@ SOLUTION is a 2D-array, each cell of which is an ID belonging to TILESET"
       (loop :for j :below m :do
         (let* ((tile (aref solution i j))
                (fun-tile (tileset-get-tile-function tileset tile)))
-          (apply fun-tile i j other-args))))
+          (apply fun-tile j i other-args))))
     ;; (draw-grid 0 0 m n
     ;;            :options '(thin))
     ))

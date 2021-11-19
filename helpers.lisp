@@ -73,4 +73,10 @@ where OPT-ARGS is a list formatted as in `format-options'"
        (let ((*standard-output* ,stream))
          (preamble :packages ,packages :documentclass ,documentclass)
          (with-env (document)
-             ,@body)))))
+             ,@body)
+         (format t "~@{~a~%~}"
+                 "%%% Local Variables:"
+                 "%%% mode: latex"
+                 "%%% TeX-master: t"
+                 "%%% End:")
+         nil))))

@@ -32,3 +32,17 @@
                   (apply 'draw-wang-tile 0 0 ',tile)))
        (tileset-make-rules-from-sides ,tileset)
        ,tileset)))
+
+(defconstant +rao-jeandel+
+  (def-wang-tileset rao-jeandel
+    (:green :red :red :red)
+    (:green :blue :red :blue)
+    (:green :green :green :red)
+    (:blue :red :blue :white)
+    (:blue :white :blue :blue)
+    (:white :red :white :white)
+    (:white :blue :green :red)
+    (:red :blue :white :blue)
+    (:red :white :red :blue)
+    (:red :blue :green :green)
+    (:green :red :white :red)))

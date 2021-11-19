@@ -23,4 +23,6 @@
   (:export
    ;; Tiles
    #:deftile
-   #:draw-tiling))
+   #:draw-tiling
+   #:def-wang-tileset
+   #:solve-naive))

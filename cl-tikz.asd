@@ -16,4 +16,5 @@
                              (:file "tileset")
                              (:file "draw-tiles")
                              (:file "tiles-patterns")
+                             (:file "solver")
                              (:file "example")))))

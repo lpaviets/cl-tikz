@@ -1,6 +1,6 @@
 (in-package #:cl-tikz/tiles)
 
-(defun gen-test-file ()
+(defun random-test-file ()
   (with-preamble-to-file ("./test-output.tex") ()
     (with-env (tikzpicture)
       (let ((test-set (make-tileset 3)))
@@ -16,5 +16,10 @@
                                                             (loop :repeat 3
                                                                   :collect
                                                                   (random 3))))))
-          (draw-tiling solution test-set)
-          nil)))))
+          (draw-tiling solution test-set))))))
+
+
+(defun gen-rao-jeandel (m n)
+  (with-preamble-to-file ("./test-output-rao-jeandel.tex") ()
+    (with-env (tikzpicture)
+      (draw-tiling (solver-naive *rao-jeandel* (list m n)) +rao-jeandel+))))

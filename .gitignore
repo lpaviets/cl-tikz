@@ -9,3 +9,5 @@
 *.fls
 /auto/
 /test-output.synctex.gz
+/tiles/auto/
+*.gz
