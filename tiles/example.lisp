@@ -22,4 +22,8 @@
 (defun gen-rao-jeandel (m n)
   (with-preamble-to-file ("./test-output-rao-jeandel.tex") ()
     (with-env (tikzpicture)
-      (draw-tiling (solver-naive *rao-jeandel* (list m n)) +rao-jeandel+))))
+      (with-random-crop (0.5 0.5 (- n 0.5) (- m 0.5))
+          (draw-tiling (solver-naive *rao-jeandel*
+                                     (list m n)
+                                     t)
+                       +rao-jeandel+)))))

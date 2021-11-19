@@ -9,6 +9,7 @@
    #:draw-node
    #:draw-grid
    #:draw-long-path
+   #:with-random-crop
    ;; Utilities
    #:symb
    #:capture-stdout

@@ -47,7 +47,8 @@ where OPT-ARGS is a list formatted as in `format-options'"
   ;; Default packages
   (dolist (package '((:tikz . nil)
                      (:color . nil)
-                     (:inputenc . (utf8))))
+                     (:inputenc . (utf8))
+                     (:pgfmath . nil)))
     (latex-command :usepackage
                    :mand-args (car package)
                    :opt-args (cdr package)))
@@ -58,7 +59,10 @@ where OPT-ARGS is a list formatted as in `format-options'"
                    :opt-args (cdr package)))
   ;; Tikz libraries
   (latex-command :usetikzlibrary
-                 :mand-args '(arrows shapes decorations.markings)))
+                 :mand-args '(arrows
+                              shapes
+                              decorations.markings
+                              decorations.pathmorphing)))
 
 (defmacro with-preamble-to-file ((filename &key (documentclass :standalone) packages)
                                  (&rest keys &key &allow-other-keys)

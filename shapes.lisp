@@ -33,3 +33,12 @@
              (if (member dir '(:n :node))
                  (format t " -- (~a)" (to-lowercase-string val))
                  (format t " --++ (~a, ~a)" dx dy)))))
+
+(defmacro with-random-crop ((xmin ymin xmax ymax &key (step 2)) &body body)
+  `(with-env (scope)
+     (latex-command :pgfmathsetseed :mand-args (list 12345))
+     (draw-rectangle ,xmin ,ymin ,xmax ,ymax
+                     :options '((:decoration . ,(format nil "{random steps, segment length=~amm}" step))
+                                :decorate
+                                :clip))
+     ,@body))
