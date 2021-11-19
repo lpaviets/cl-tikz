@@ -6,10 +6,12 @@
    ;; Draw paths
    #:draw-rectangle
    #:draw-square
+   #:draw-node
    #:draw-grid
    #:draw-long-path
    ;; Utilities
    #:symb
+   #:capture-stdout
    #:format-options
    #:latex-command
    #:with-env

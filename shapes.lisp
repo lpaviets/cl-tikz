@@ -13,6 +13,9 @@
   (with-tikz-command (draw :options options)
     (format t " (~a, ~a) grid[step=~a] (~a, ~a)" xmin ymin step xmax ymax)))
 
+(defun draw-node (x y &key name label options)
+  (with-tikz-command (node :options options)
+    (format t " ~@[(~a)~] at (~a, ~a) {~@[~a~]}" name x y label)))
 
 (defun draw-long-path (xstart ystart path &key options)
   (with-tikz-command (draw :options options)

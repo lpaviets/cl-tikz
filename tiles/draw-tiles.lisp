@@ -27,7 +27,9 @@ pair (symbol default-value). It will be inserted as-is in the parameter
 list of the generated function
 - BODY: the body of the generated function"
   (let ((fun-name (symb 'make-tile- name #\- id))
-        (fun-args (append '(&key (size 1)) other-args)))
+        (fun-args (append '(&key (size 1)) other-args))
+        (node-content (gensym))
+        (options (gensym)))
     `(progn
        (defun ,fun-name (x y ,@fun-args)
          ,(format nil
@@ -36,11 +38,18 @@ See `deftile' for more information"
                   id
                   tileset)
          (declare (ignorable size))
-         ,(when background
-            `(with-tikz-command (fill :options '(,background))
-               (format t "(~a, ~a) rectangle (~a, ~a)" x y (+ x size) (+ y size))))
-         ,@body
-         (format t "~&"))
+
+         (let ((,node-content
+                 (capture-stdout
+                   (with-env (tikzpicture)
+                     ,@body)
+                   (format t "~%")))
+               (,options (list (cons "minimum size" size)
+                               (cons "inner sep" "0pt")
+                               ,@(when background (list (list 'quote (cons :fill background)))))))
+
+           (draw-node x y :options ,options
+                          :label ,node-content)))
        (tileset-add-tile-function ,tileset ,id ',fun-name)
        ,(when rules
           `(tileset-add-rules ,tileset ,rules))
@@ -57,5 +66,6 @@ SOLUTION is a 2D-array, each cell of which is an ID belonging to TILESET"
         (let* ((tile (aref solution i j))
                (fun-tile (tileset-get-tile-function tileset tile)))
           (apply fun-tile i j other-args))))
-    (draw-grid 0 0 m n
-               :options '(thin))))
+    ;; (draw-grid 0 0 m n
+    ;;            :options '(thin))
+    ))
