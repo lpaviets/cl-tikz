@@ -16,6 +16,9 @@
 (defun tileset-get-tile-function (tileset id)
   (aref (tileset-tiles tileset) id))
 
+(defun tileset-add-tile-sides (tileset tile sides)
+  (setf (aref (tileset-sides tileset) tile) sides))
+
 (defmethod add-rules ((t-a tileset) (t-b tileset))
   (add-rules (tileset-rules t-a) (tileset-rules t-b)))
 

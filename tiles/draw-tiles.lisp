@@ -54,7 +54,7 @@ See `deftile' for more information"
        ,(when rules
           `(tileset-add-rules ,tileset ,rules))
        ,(when sides
-          `(setf (aref ,tileset ,id) ,sides)))))
+          `(tileset-add-tile-sides ,tileset ,id ,sides)))))
 
 
 (defun draw-tiling (solution tileset &key other-args)

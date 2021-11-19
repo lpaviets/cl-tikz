@@ -21,3 +21,14 @@
     (with-tikz-command (draw)
       (format t "~a -- ~a" br tl))
     (draw-square x y :size size)))
+
+(defmacro def-wang-tileset (name &body tiles)
+  (let ((tileset (gensym)))
+    `(let ((,tileset (make-tileset ,(length tiles))))
+       ,@(loop :for tile :in tiles
+               :for i :from 0
+               :collect
+               `(deftile (,tileset ,i ,name :sides ',tile) ()
+                  (apply 'draw-wang-tile 0 0 ',tile)))
+       (tileset-make-rules-from-sides ,tileset)
+       ,tileset)))
