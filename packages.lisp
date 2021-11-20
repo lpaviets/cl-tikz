@@ -26,4 +26,6 @@
    #:deftile
    #:draw-tiling
    #:def-wang-tileset
-   #:solve-naive))
+   ;; Solver
+   #:solve-naive
+   #:solve-dancing-links))

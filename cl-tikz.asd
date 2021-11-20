@@ -16,5 +16,6 @@
                              (:file "tileset")
                              (:file "draw-tiles")
                              (:file "tiles-patterns")
+                             (:file "dancing-links")
                              (:file "solver")
                              (:file "example")))))
