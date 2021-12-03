@@ -1,0 +1,20 @@
+* Intro
+
+This project tries to make it easier to write TikZ code to produce nice images to embed in LaTeX documents.
+As TikZ's syntax is sometimes hard to grasp, and as computations done directly with the TeX engine are either hard to do, or slow as hell, we try to do most of the work in a more powerful programming language, and we directly generate "low-level TikZ"
+
+In particular, as I am working with Wang tiles, subshifts and several other combinatoric objects, a lot of code will go into making such drawings easier.
+
+* Todo
+
+#+begin_src lisp
+;; Link Tileset <-> DL algo
+
+;; See https://github.com/seblabbe/slabbe/blob/d8340eeb5fdccffc6c28ab6c3b0e6d68177bb676/slabbe/wang_tiles.py#L2902
+;; for a Python implementation the same idea,
+;; as well as https://github.com/seblabbe/slabbe/blob/d8340eeb5fdccffc6c28ab6c3b0e6d68177bb676/slabbe/wang_tiles.py#L2679
+
+;; View the problem as a set of constraints
+;; - Each cell of the grid must contain one, and exactly one, tile
+;; - No two adjacent cells can contain "invalid" tiles
+#+end_src
