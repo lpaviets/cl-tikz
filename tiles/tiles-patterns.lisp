@@ -46,3 +46,19 @@
     (:red :white :red :blue)
     (:red :blue :green :green)
     (:green :red :white :red)))
+
+(defconstant +kari-culik+
+  (def-wang-tileset kari-culik
+    (:red :green :yellow :yellow)
+    (:red :yellow :green :yellow)
+    (:yellow :green :green :yellow)
+    (:yellow :yellow :red :red)
+    (:green :green :red :red)
+    (:green :yellow :yellow :red)
+    (:blue :red :blue :blue)
+    (:blue :yellow :blue :green)
+    (:blue :red :purple :yellow)
+    (:blue :blue :purple :yellow)
+    (:purple :red :purple :blue)
+    (:purple :yellow :purple :green)
+    (:purple :yellow :blue :yellow)))
