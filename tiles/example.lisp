@@ -26,4 +26,4 @@
           (draw-tiling (solver-naive *rao-jeandel*
                                      (list m n)
                                      t)
-                       +rao-jeandel+)))))
+                       *rao-jeandel*)))))

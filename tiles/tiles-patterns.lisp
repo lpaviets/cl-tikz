@@ -33,7 +33,7 @@
        (tileset-make-rules-from-sides ,tileset)
        ,tileset)))
 
-(defconstant +rao-jeandel+
+(defvar *rao-jeandel*
   (def-wang-tileset rao-jeandel
     (:green :red :red :red)
     (:green :blue :red :blue)
@@ -47,7 +47,7 @@
     (:red :blue :green :green)
     (:green :red :white :red)))
 
-(defconstant +kari-culik+
+(defvar *kari-culik*
   (def-wang-tileset kari-culik
     (:red :green :yellow :yellow)
     (:red :yellow :green :yellow)
