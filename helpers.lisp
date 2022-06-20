@@ -5,17 +5,17 @@
                  (list (to-lowercase-string options))
                  (mapcar (lambda (x)
                            (if (consp x)
-                               (format nil "~a=~a"
+                               (format nil "~A=~A"
                                        (to-lowercase-string (car x))
                                        (to-lowercase-string (cdr x)))
-                               (format nil "~a" (to-lowercase-string x))))
+                               (format nil "~A" (to-lowercase-string x))))
                          options)))
         (op (if mandatory "{" "["))
         (cl (if mandatory "}" "]")))
-    (format t "~a~{~a~^, ~}~a~:[~;~%~]" op res cl newline)))
+    (format t "~A~{~A~^, ~}~A~:[~;~%~]" op res cl newline)))
 
 (defun latex-command (command &key mand-args opt-args)
-  (format t "\\~a" (to-lowercase-string command))
+  (format t "\\~A" (to-lowercase-string command))
   (when opt-args (format-options opt-args :mandatory nil :newline nil))
   (when mand-args (format-options mand-args :mandatory t :newline nil))
   (format t "~%"))
@@ -23,15 +23,15 @@
 (defmacro with-env ((env &key options) &body body)
   (let ((varenv (to-lowercase-string env)))
     `(progn
-       (format t "~&\\begin{~a}" ,varenv)
+       (format t "~&\\begin{~A}" ,varenv)
        (format-options ,options)
        ,@body
-       (format t "~&\\end{~a}" ,varenv))))
+       (format t "~&\\end{~A}" ,varenv))))
 
 (defmacro with-tikz-command ((command &key options) &body body)
   (let ((varcommand (to-lowercase-string command)))
    `(progn
-      (format t "\\~a" ,varcommand)
+      (format t "\\~A" ,varcommand)
       (format-options ,options :newline nil)
       ,@body
       (format t ";~%"))))
@@ -78,7 +78,7 @@ where OPT-ARGS is a list formatted as in `format-options'"
          (preamble :packages ,packages :documentclass ,documentclass)
          (with-env (document)
              ,@body)
-         (format t "~@{~a~%~}"
+         (format t "~@{~A~%~}"
                  "%%% Local Variables:"
                  "%%% mode: latex"
                  "%%% TeX-master: t"

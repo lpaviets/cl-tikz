@@ -8,6 +8,7 @@
   :serial t
   :components ((:file "packages")
                (:file "utils")
+               (:file "maths")
                (:file "helpers")
                (:file "shapes")
                (:file "cl-tikz")

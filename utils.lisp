@@ -12,7 +12,6 @@
     ((or string symbol) (string-downcase (string designator)))
     (t (princ-to-string designator))))
 
-
 (defmacro capture-stdout (&body body)
   "Redirect all the things printed on stdout by BODY to a string, and
 return this string once BODY terminates"
