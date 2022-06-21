@@ -38,11 +38,11 @@
   (destructuring-bind (m n) (array-dimensions grid)
     (let ((left-constraint (when (> y 0)
                              (invalid-tiles-right tileset (aref grid x (1- y)))))
-          (right-constraint (when (< y (1- m))
+          (right-constraint (when (< y (1- n))
                               (invalid-tiles-left tileset (aref grid x (1+ y)))))
           (down-constraint (when (> x 0)
                              (invalid-tiles-up tileset (aref grid (1- x) y))))
-          (up-constraint (when (< x (1- n))
+          (up-constraint (when (< x (1- m))
                            (invalid-tiles-down tileset (aref grid (1+ x) y)))))
 
       (nconc left-constraint right-constraint down-constraint up-constraint))))

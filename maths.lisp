@@ -7,6 +7,7 @@
 (defvar *rotation-angle* 0d0)
 (defvar *rotation-center* (make-point :x 0 :y 0))
 (defvar *float-approx-digits* 2)
+(defvar *origin* (make-point :x 0 :y 0))
 
 (defmacro with-rotation (angle (&optional center-x center-y) &body body)
   (let ((new-center (if (or center-x center-y)
@@ -29,6 +30,14 @@
                                  '*rotation-center*)))
      ,@body))
 
+(defmacro with-shift (x y &body body)
+  `(let ((*origin* (add-point *origin* (make-point :x ,x :y ,y))))
+     ,@body))
+
+(defmacro with-reset-shift (&body body)
+  `(let ((*origin* (make-point :x 0 :y 0)))
+     ,@body))
+
 (defun add-point (pt-a pt-b)
   (make-point :x (+ (point-x pt-a) (point-x pt-b))
               :y (+ (point-y pt-a) (point-y pt-b))))
@@ -40,16 +49,16 @@
 (defun rotate-point (point)
   "Return the point obtained by rotating POINT by *ROTATION-ANGLE* radians
 counterclockwise around *ROTATION-CENTER*"
-  (let* ((diff (sub-point *rotation-center* point))
+  (let* ((diff (sub-point point *rotation-center*))
          (dx (point-x diff))
          (dy (point-y diff))
          (cos-angle (cos *rotation-angle*))
          (sin-angle (sin *rotation-angle*)))
     (add-point *rotation-center*
-               (make-point :x (+ (* cos-angle dx)
+               (make-point :x (- (* cos-angle dx)
                                  (* sin-angle dy))
-                           :y (- (* cos-angle dy)
-                                 (* sin-angle dx))))))
+                           :y (+ (* sin-angle dx)
+                                 (* cos-angle dy))))))
 
 (defun point-to-tikz (point)
   "Return a string formatted as \"(x, y)\" if POINT is #S(POINT :X X :Y Y).
@@ -65,4 +74,4 @@ digits after the decimal point"
   "Format the point #S(POINT :X X :Y Y) as a string, after
 having rotated it according to *ROTATION-CENTER* and *ROTATION-ANGLE*
 See `point-to-tikz' for details on the output string"
-  (point-to-tikz (rotate-point (make-point :x x :y y))))
+  (point-to-tikz (add-point *origin* (rotate-point (make-point :x x :y y)))))

@@ -19,11 +19,18 @@
           (draw-tiling solution test-set))))))
 
 
-(defun gen-rao-jeandel (m n)
-  (with-preamble-to-file ("./test-output-rao-jeandel.tex") ()
-    (with-env (tikzpicture)
-      (with-random-crop (0.5 0.5 (- n 0.5) (- m 0.5))
-          (draw-tiling (solver-naive *rao-jeandel*
+(defun gen-example-tiling (tileset filename m n)
+  (let ((name (format nil "./examples/test-~A.tex" filename)))
+    (with-preamble-to-file (name) ()
+      (with-env (tikzpicture)
+        (with-random-crop (0.5 0.5 (- n 0.8) (- m 0.8))
+          (draw-tiling (solver-naive tileset
                                      (list m n)
                                      t)
-                       *rao-jeandel*)))))
+                       tileset))))))
+
+(defun gen-rao-jeandel (m n)
+  (gen-example-tiling *rao-jeandel* 'rao-jeandel m n))
+
+(defun gen-kari-culik (m n)
+  (gen-example-tiling *kari-culik* 'kari-culik m n))

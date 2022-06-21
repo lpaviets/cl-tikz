@@ -78,7 +78,7 @@ where OPT-ARGS is a list formatted as in `format-options'"
          (preamble :packages ,packages :documentclass ,documentclass)
          (with-env (document)
              ,@body)
-         (format t "~@{~A~%~}"
+         (format t "~2%~@{~A~%~}"
                  "%%% Local Variables:"
                  "%%% mode: latex"
                  "%%% TeX-master: t"

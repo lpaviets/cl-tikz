@@ -20,19 +20,23 @@
 (defun draw-long-path (xstart ystart path &key options)
   (with-tikz-command (draw :options options)
     (loop :initially (format t " ~A" (point-str xstart ystart))
-          :with dx = 0
-          :with dy = 0
+          :with x = xstart
+          :and y = ystart
           :for (dir val) :on path :by #'cddr
           :do
              (ccase dir
-               ((:l :left) (setf dx (- val)))
-               ((:r :right (setf dx val)))
-               ((:u :up) (setf dy val))
-               ((:d :down) (setf dy (- val)))
+               ((:l :left) (decf x val))
+               ((:r :right) (incf x val))
+               ((:u :up) (incf y val))
+               ((:d :down) (decf y val))
+               ((:c :cycle)
+                (assert (null val) ()
+                        ":cycle should be the last element of the path"))
                ((:n :node)))
-             (if (member dir '(:n :node))
-                 (format t " -- (~A)" (to-lowercase-string val))
-                 (format t " --++ ~A" (point-str dx dy))))))
+             (case dir
+               ((:n :node) (format t " -- (~A)" (to-lowercase-string val)))
+               ((:c :cycle) (format t "-- cycle"))
+               (t (format t " -- ~A" (point-str x y)))))))
 
 (defmacro with-random-crop ((xmin ymin xmax ymax &key (step 2)) &body body)
   `(with-env (scope)
