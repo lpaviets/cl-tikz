@@ -3,22 +3,21 @@
 (defpackage #:cl-tikz/math
   (:use #:cl)
   (:export
+   ;; Parameters
+   #:*float-approx-digits*
    ;; Point
    #:point
    #:make-point
    #:point-x
    #:point-y
-   #:add-point
-   #:sub-point
-   #:rotate-point
-   #:point-to-tikz
-   #:point-str
    ;; Macros
    #:with-rotation
    #:with-reset-rotation
    #:with-relative-rotation
    #:with-shift
-   #:with-reset-shift))
+   #:with-reset-shift
+   ;; Drawing
+   #:point-str))
 
 (defpackage #:cl-tikz
   (:use #:cl #:cl-tikz/math)
@@ -33,6 +32,7 @@
    ;; Utilities
    #:symb
    #:capture-stdout
+   #:dohash
    #:format-options
    #:latex-command
    #:with-env

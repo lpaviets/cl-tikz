@@ -56,6 +56,26 @@ See `deftile' for more information"
        ,(when sides
           `(tileset-add-tile-sides ,tileset ,id ,sides)))))
 
+(defun draw-wang-tile (x y left down right up &key (size 1))
+  (let ((d (/ size 2)))
+   (let ((bl (point-str (- x d) (- y d)))
+         (br (point-str (+ x d) (- y d)))
+         (tl (point-str (- x d) (+ y d)))
+         (tr (point-str (+ x d) (+ y d)))
+         (center (point-str x y)))
+     (with-tikz-command (fill :options left)
+       (format t "~{~A -- ~} cycle" (list tl center bl)))
+     (with-tikz-command (fill :options down)
+       (format t "~{~A -- ~} cycle" (list bl center br)))
+     (with-tikz-command (fill :options right)
+       (format t "~{~A -- ~} cycle" (list tr center br)))
+     (with-tikz-command (fill :options up)
+       (format t "~{~A -- ~} cycle" (list tl center tr)))
+     (with-tikz-command (draw)
+       (format t "~A -- ~A" bl tr))
+     (with-tikz-command (draw)
+       (format t "~A -- ~A" br tl))
+     (draw-square x y :size size :options '(thin)))))
 
 (defun draw-tiling (solution tileset &key other-args)
   "Draw the tiling corresponding to SOLUTION with the tileset TILESET.
@@ -66,6 +86,6 @@ SOLUTION is a 2D-array, each cell of which is an ID belonging to TILESET"
         (let* ((tile (aref solution i j))
                (fun-tile (tileset-get-tile-function tileset tile)))
           (apply fun-tile j i other-args))))
-    ;; (draw-grid 0 0 m n
+    ;; (draw-grid -1/2 -1/2 m n
     ;;            :options '(thin))
     ))
