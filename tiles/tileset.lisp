@@ -2,13 +2,33 @@
 
 ;;; Tile sets
 
-(defstruct (tileset
-            (:constructor make-tileset (size)))
-  "A simple structure implementing a tileset"
-  (size (error "Must specify a size for the tileset") :type fixnum :read-only t)
-  (tiles (make-array size :initial-element nil) :type array)
-  (rules (make-rules size))
-  (sides (make-array size :initial-element nil) :type array))
+(defclass tileset ()
+  ((size :initarg :size
+         :initform (error "Must specify a size for the tileset")
+         :accessor tileset-size
+         :type fixnum)
+   (tiles :initarg :tiles
+          :initform nil
+          :accessor tileset-tiles
+          :type array)
+   (rules :initarg :rules
+          :initform nil
+          :accessor tileset-rules)
+   (sides :initarg :sides
+          :initform nil
+          :accessor tileset-sides
+          :type array)))
+
+(defun make-tileset (size)
+  (let ((tileset (make-instance 'tileset :size size)))
+    (with-accessors ((tiles tileset-tiles)
+                     (rules tileset-rules)
+                     (sides tileset-sides))
+        tileset
+      (setf tiles (make-array size :initial-element nil)
+            rules (make-rules size)
+            sides (make-array size :initial-element nil)))
+    tileset))
 
 (defun tileset-add-tile-function (tileset id fun)
   (setf (aref (tileset-tiles tileset) id) fun))
