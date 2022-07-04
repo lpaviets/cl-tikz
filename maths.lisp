@@ -1,4 +1,4 @@
-(in-package #:cl-tikz)
+(in-package #:cl-tikz/math)
 
 (defstruct point
   x
