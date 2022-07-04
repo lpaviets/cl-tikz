@@ -14,6 +14,7 @@
                (:file "cl-tikz")
                (:module "tiles"
                 :components ((:file "rules")
+                             (:file "wang-tiles")
                              (:file "tileset")
                              (:file "draw-tiles")
                              (:file "tiles-patterns")
