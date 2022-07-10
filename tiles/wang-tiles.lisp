@@ -2,45 +2,49 @@
 
 ;;; Tiles
 
-(defclass wang-tile ()
+(defclass tile ()
   ((tileset :initarg :tileset
             :reader tileset
             :type (or tileset symbol)
             :documentation "The tileset to which this tile belongs")
-   (pos :initarg :pos
-        :accessor pos
-        :type point)
    (draw-function :initarg :draw-function
                   :accessor draw-function
                   :type function
                   :documentation "Function of one argument, a POINT (X, Y),
- used to draw the tile at the position (X, Y)")
-   (sides :initarg :sides
+ used to draw the tile at the position (X, Y)"))
+    (:default-initargs
+     :tileset (error "A tileset is required for each Wang tile")))
+
+(defclass wang-tile (tile)
+  ((sides :initarg :sides
           :type (array keyword (4))
           :reader sides
           :documentation "In case the tile is really a Wang Tile with
 coloured sides, this slot represents those sides in order left, down,
-right and up.
-If the tile is an 'anti-Wang tile', then those keywords simply represent
-the side of the tile, and the valid pairings are given by the 'antiwang'
-slot")
-   (antiwang :initarg :antiwang
-             :type (array hash-table (4))
-             :reader antiwang
-             :documentation "An array of four hash-tables.
-Each one corresponds to a direction, in order left, down, right, up.
-Each hash-table contains the 'colours' of the tiles that can be placed
- next to this tile, in the corresponding direction."))
+right and up."))
   (:documentation "Class representing Wang tiles.
-A tile is said to be a Wang Tile if it is only defined by its set of
-allowed neighbours - those are not necessarily colours, but are determined
-only by the RULES slot.")
+A tile is said to be a Wang Tile if it is only defined by its sides, which
+in turn determine the valid ajaacency rules.")
   (:default-initargs
    :tileset (error "A tileset is required for each Wang tile")
-   :sides nil
-   :antiwang nil))
+   :sides nil))
 
-(defun make-tile (tileset left down right up &key draw antiwang)
+(defclass variant-wang-tile (tile)
+  ((sides :initarg :sides
+          :type (array keyword (4))
+          :reader sides
+          :documentation "This slot represents the sides in order left, down,
+right and up. Those keywords simply represent the side of the tile, and
+the valid pairings are given by the 'valid-neighbours'slot")
+   (valid-neighbours :initarg :neighbours
+                     :type (array hash-table (4))
+                     :reader valid-neighbours
+                     :documentation "An array of four hash-tables.
+Each one corresponds to a direction, in order left, down, right, up.
+Each hash-table contains the 'colours' of the tiles that can be placed
+next to this tile, in the corresponding direction.")))
+
+(defun make-wang-tile (tileset left down right up &key draw)
   (let ((sides (make-array 4
                            :element-type 'keyword
                            :initial-contents (list left down right up)))
@@ -49,7 +53,6 @@ only by the RULES slot.")
     (make-instance 'wang-tile
                    :tileset tileset
                    :sides sides
-                   :antiwang antiwang
                    :draw-function draw-fun)))
 
 (declaim (inline side-to-digit))
@@ -79,7 +82,13 @@ only by the RULES slot.")
     (with-rotation (* turns (/ pi 2)) ((point-x pos) (point-y pos))
       (draw-wang-tile (point-x pos) (point-y pos) left down right up))))
 
-(defun %valid-neighbour-wang-p (t1 t2 dir)
+(defgeneric valid-neighbour-p (t1 t2 dir)
+  (:method :before ((t1 tile) (t2 tile) dir)
+    (setf dir (side-to-digit dir)))
+  (:method ((t1 tile) (t2 tile) dir)
+    (error "~&No adjacency rule defined for tiles ~S and ~S~%" t1 t2)))
+
+(defmethod valid-neighbour-p ((t1 wang-tile) (t2 wang-tile) dir)
   (with-tile-sides (l1 d1 r1 u1) t1
     (with-tile-sides (l2 d2 r2 u2) t2
       (ccase dir
@@ -88,18 +97,8 @@ only by the RULES slot.")
         (2 (eql r1 l1))
         (3 (eql u1 d1))))))
 
-(defun %valid-neighbour-antiwang-p (t1 t2 dir)
+(defmethod valid-neighbour-p ((t1 variant-wang-tile) (t2 variant-wang-tile) dir)
   (with-tile-sides (l1 d1 r1 u1) t1
-    (let ((allowed-colours (aref (antiwang t2) dir))
+    (let ((allowed-colours (aref (valid-neighbours t2) dir))
           (colour-to-check (tile-colour t1 dir)))
       (gethash colour-to-check allowed-colours))))
-
-(defun valid-neighbour-p (t1 t2 dir)
-  (setf dir (side-to-digit dir))
-  (cond
-    ((antiwang t1)
-     (assert (antiwang t2))
-     (%valid-neighbour-antiwang-p t1 t2 dir))
-    (t
-     (assert (not (antiwang t2)))
-     (%valid-neighbour-wang-p t1 t2 dir))))
