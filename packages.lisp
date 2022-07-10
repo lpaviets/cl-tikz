@@ -7,9 +7,10 @@
    #:*float-approx-digits*
    ;; Point
    #:point
-   #:make-point
    #:point-x
    #:point-y
+   #:with-point
+   #:point-neighbours
    ;; Macros
    #:with-rotation
    #:with-reset-rotation

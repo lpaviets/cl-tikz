@@ -4,14 +4,32 @@
   x
   y)
 
+(declaim (inline point))
+(defun point (x y)
+  (make-point :x x :y y))
+
+(defmacro with-point ((x y) point &body body)
+  `(with-accessors ((,x point-x)
+                    (,y point-y))
+       ,point
+     ,@body))
+
+(defun point-neighbours (point)
+  (with-point (x y) point
+    (let ((left (point (1- x) y))
+          (down (point x (1- y)))
+          (right (point (1+ x) y))
+          (up (point x (1+ y))))
+      (list left down right up))))
+
 (defvar *rotation-angle* 0d0)
-(defvar *rotation-center* (make-point :x 0 :y 0))
+(defvar *rotation-center* (point 0 0))
 (defvar *float-approx-digits* 2)
-(defvar *origin* (make-point :x 0 :y 0))
+(defvar *origin* (point 0 0))
 
 (defmacro with-rotation (angle (&optional center-x center-y) &body body)
   (let ((new-center (if (or center-x center-y)
-                        `(make-point :x ,center-x :y ,center-y)
+                        `(point ,center-x ,center-y)
                         '*rotation-center*)))
     `(let ((*rotation-angle* ,angle)
            (*rotation-center* ,new-center))
@@ -19,23 +37,23 @@
 
 (defmacro with-reset-rotation (&body body)
   `(let ((*rotation-angle* 0)
-         (*rotation-center* (make-point :x 0 :y 0)))
+         (*rotation-center* (point 0 0)))
      ,@body))
 
 (defmacro with-relative-rotation (angle (&optional center-x center-y) &body body)
   `(let ((*rotation-angle* (+ *rotation-angle* ,angle))
          (*rotation-center* ,(if (or center-x center-y)
                                  `(add-point *rotation-center*
-                                             (make-point :x ,center-x :y ,center-y))
+                                             (point ,center-x ,center-y))
                                  '*rotation-center*)))
      ,@body))
 
 (defmacro with-shift (x y &body body)
-  `(let ((*origin* (add-point *origin* (make-point :x ,x :y ,y))))
+  `(let ((*origin* (add-point *origin* (point ,x ,y))))
      ,@body))
 
 (defmacro with-reset-shift (&body body)
-  `(let ((*origin* (make-point :x 0 :y 0)))
+  `(let ((*origin* (point 0 0)))
      ,@body))
 
 (defun add-point (pt-a pt-b)
@@ -74,4 +92,4 @@ digits after the decimal point"
   "Format the point #S(POINT :X X :Y Y) as a string, after
 having rotated it according to *ROTATION-CENTER* and *ROTATION-ANGLE*
 See `point-to-tikz' for details on the output string"
-  (point-to-tikz (add-point *origin* (rotate-point (make-point :x x :y y)))))
+  (point-to-tikz (add-point *origin* (rotate-point (point x y)))))
