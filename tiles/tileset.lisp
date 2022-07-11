@@ -3,81 +3,41 @@
 ;;; Tile sets
 
 (defclass tileset ()
-  ((size :initarg :size
-         :initform (error "Must specify a size for the tileset")
-         :accessor tileset-size
-         :type fixnum)
+  ((name :initarg :name
+         :reader tileset-name
+         :type symbol)
    (tiles :initarg :tiles
-          :initform nil
           :accessor tileset-tiles
-          :type array)
-   (rules :initarg :rules
-          :initform nil
-          :accessor tileset-rules)
-   (sides :initarg :sides
-          :initform nil
-          :accessor tileset-sides
-          :type array)))
+          :type hash-table)))
 
-(defun make-tileset (size)
-  (let ((tileset (make-instance 'tileset :size size)))
-    (with-accessors ((tiles tileset-tiles)
-                     (rules tileset-rules)
-                     (sides tileset-sides))
-        tileset
-      (setf tiles (make-array size :initial-element nil)
-            rules (make-rules size)
-            sides (make-array size :initial-element nil)))
-    tileset))
+(defmacro dotiles ((tile tileset) &body body)
+  `(dohash (,tile) (tileset-tiles ,tileset)
+     ,@body))
 
-(defun tileset-add-tile-function (tileset id fun)
-  (setf (aref (tileset-tiles tileset) id) fun))
+(defun make-tileset (name tiles)
+  (make-instance 'tileset :name name :tiles tiles))
 
-(defun tileset-get-tile-function (tileset id)
-  (aref (tileset-tiles tileset) id))
+(defmacro defwangtiles (name &body tiles-sides)
+  (let ((tiles (gensym))
+        (tile (gensym)))
+    `(make-tileset ',name (let ((,tiles (make-hash-table)))
+                            (dolist (,tile ',tiles-sides ,tiles)
+                              (setf (gethash (apply 'make-wang-tile ',name ,tile) ,tiles) t))))))
 
-(defun tileset-add-tile-sides (tileset tile sides)
-  (setf (aref (tileset-sides tileset) tile) sides))
+(defun all-valid-neighbours (tileset tile dir)
+  (let ((valid-neighbours (make-hash-table :test #'eq
+                                           :size (hash-table-size (tileset-tiles tileset)))))
+    (dotiles (t2 tileset)
+             (when (valid-neighbour-p tile t2 dir)
+               (setf (gethash t2 valid-neighbours) t)))
+    valid-neighbours))
 
-(defmethod add-rules ((t-a tileset) (t-b tileset))
-  (add-rules (tileset-rules t-a) (tileset-rules t-b)))
-
-(defmethod add-rules ((tileset tileset) r)
-  (add-rules (tileset-rules tileset) r))
-
-(defun tileset-tile-side (tileset tile side)
-  (let ((sides (tileset-sides tileset)))
-    (case side
-      (:left (nth 0 (aref sides tile)))
-      (:down (nth 1 (aref sides tile)))
-      (:right (nth 2 (aref sides tile)))
-      (:up (nth 3 (aref sides tile))))))
-
-(defun tileset-make-sides-table (tileset)
-  (let ((size (tileset-size tileset))
-        (all-sides-table (make-hash-table)))
-    (dolist (side '(:left :down :right :up) all-sides-table)
-      (setf (gethash side all-sides-table) (make-hash-table))
-      (dotimes (id size)
-        (let ((tile-side (tileset-tile-side tileset id side)))
-          (push id (gethash tile-side (gethash side all-sides-table))))))))
-
-(defun tileset-fill-side-rules-from-table (tileset table side)
-  (let ((size (tileset-size tileset))
-        (rules (funcall (rules-side-name side) (tileset-rules tileset)))
-        (opp-side (ccase side
-                    (:right :left)
-                    (:up :down))))
-    ;; Fill the rules-<side> table:
-    ;; Go through the list of tiles whose <opposite>-side is the same as our SIDE
-    (loop :with opp-side-table = (gethash opp-side table)
-          :for tile :below size :do
-            (loop :with tile-side = (tileset-tile-side tileset tile side)
-                  :for j :below size
-                  :do (setf (aref rules tile j)
-                            (not (null (member j (gethash tile-side opp-side-table)))))))))
-
-(defun tileset-make-rules-from-sides (tileset)
-  (let ((sides-table (tileset-make-sides-table tileset)))
-    (tileset-fill-side-rules-from-table tileset sides-table :right)
-    (tileset-fill-side-rules-from-table tileset sides-table :up)))
+(defun tile-fits-with-p (tile left down right up)
+  (and (or (not left)
+           (valid-neighbour-p tile left :left))
+       (or (not down)
+           (valid-neighbour-p tile down :down))
+       (or (not right)
+           (valid-neighbour-p tile right :right))
+       (or (not up)
+           (valid-neighbour-p tile up :up))))
