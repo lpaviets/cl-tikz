@@ -13,9 +13,9 @@
                (:file "shapes")
                (:file "cl-tikz")
                (:module "tiles"
-                :components ((:file "rules")
-                             (:file "wang-tiles")
+                :components ((:file "wang-tiles")
                              (:file "tileset")
+                             (:file "tiling")
                              (:file "draw-tiles")
                              (:file "tiles-patterns")
                              (:file "dancing-links")
