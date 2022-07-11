@@ -35,7 +35,7 @@ in turn determine the valid ajaacency rules.")
           :reader sides
           :documentation "This slot represents the sides in order left, down,
 right and up. Those keywords simply represent the side of the tile, and
-the valid pairings are given by the 'valid-neighbours'slot")
+the valid pairings are given by the 'valid-neighbours' slot")
    (valid-neighbours :initarg :neighbours
                      :type (array hash-table (4))
                      :reader valid-neighbours

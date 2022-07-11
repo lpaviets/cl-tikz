@@ -19,6 +19,24 @@
                 ,@body)
               ,table)))
 
+(defun list-to-set (list)
+  (let ((table (make-hash-table)))
+    (dolist (x list)
+      (setf (gethash x table) t))
+    table))
+
+(defun set-to-list (set)
+  (let (list)
+    (dohash (x) set
+      (push x list))
+    list))
+
+(defun nshuffle (sequence)
+  (loop :for i :from (length sequence) :downto 2
+        :do (rotatef (elt sequence (random i))
+                     (elt sequence (1- i))))
+  sequence)
+
 (defmacro capture-stdout (&body body)
   "Redirect all the things printed on stdout by BODY to a string, and
 return this string once BODY terminates"

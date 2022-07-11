@@ -34,6 +34,9 @@
    #:symb
    #:capture-stdout
    #:dohash
+   #:list-to-set
+   #:set-to-list
+   #:nshuffle
    #:format-options
    #:latex-command
    #:with-env

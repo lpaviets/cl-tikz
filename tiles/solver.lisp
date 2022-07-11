@@ -16,12 +16,6 @@ position in the bounds of tiling as a POINT"
     (unless tile
       (return-from block-iter pos))))
 
-(defun nshuffle (sequence)
-  (loop :for i :from (length sequence) :downto 2
-        :do (rotatef (elt sequence (random i))
-                     (elt sequence (1- i))))
-  sequence)
-
 (defun solve-naive (tiling &key random)
   "Solve TILING using a naive approach, similar to a DFS.
 If RANDOM is non-nil, the nodes are explored in a random order, i.e.
