@@ -16,6 +16,7 @@
                 :components ((:file "wang-tiles")
                              (:file "tileset")
                              (:file "tiling")
+                             (:file "hom-shift")
                              (:file "draw-tiles")
                              (:file "tiles-patterns")
                              (:file "dancing-links")

@@ -31,3 +31,9 @@
     (:purple :red :purple :blue)
     (:purple :yellow :purple :green)
     (:purple :yellow :blue :yellow)))
+
+(defvar *three-chessboard*
+  (defhomshift three-chessboard
+    (:blue :red)
+    (:blue :green)
+    (:green :red)))
