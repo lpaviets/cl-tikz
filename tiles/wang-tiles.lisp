@@ -83,8 +83,9 @@ next to this tile, in the corresponding direction.")))
       (draw-wang-tile (point-x pos) (point-y pos) left down right up))))
 
 (defgeneric valid-neighbour-p (t1 t2 dir)
-  (:method :before ((t1 tile) (t2 tile) dir)
-    (setf dir (side-to-digit dir)))
+  (:method :around ((t1 tile) (t2 tile) dir)
+    (setf dir (side-to-digit dir))
+    (call-next-method t1 t2 dir))
   (:method ((t1 tile) (t2 tile) dir)
     (error "~&No adjacency rule defined for tiles ~S and ~S~%" t1 t2)))
 
@@ -92,10 +93,10 @@ next to this tile, in the corresponding direction.")))
   (with-tile-sides (l1 d1 r1 u1) t1
     (with-tile-sides (l2 d2 r2 u2) t2
       (ccase dir
-        (0 (eql l1 r1))
-        (1 (eql d1 u1))
-        (2 (eql r1 l1))
-        (3 (eql u1 d1))))))
+        (0 (eql l1 r2))
+        (1 (eql d1 u2))
+        (2 (eql r1 l2))
+        (3 (eql u1 d2))))))
 
 (defmethod valid-neighbour-p ((t1 variant-wang-tile) (t2 variant-wang-tile) dir)
   (with-tile-sides (l1 d1 r1 u1) t1
