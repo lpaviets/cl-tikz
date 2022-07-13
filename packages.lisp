@@ -24,6 +24,7 @@
   (:use #:cl #:cl-tikz/math)
   (:export
    ;; Draw paths
+   #:draw-line
    #:draw-rectangle
    #:draw-square
    #:draw-node
@@ -33,10 +34,12 @@
    ;; Utilities
    #:symb
    #:capture-stdout
+   #:with-gensyms
    #:dohash
    #:list-to-set
    #:set-to-list
    #:nshuffle
+   #:rotate-sequence
    #:format-options
    #:latex-command
    #:with-env

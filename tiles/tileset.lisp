@@ -18,14 +18,13 @@
   (make-instance 'tileset :name name :tiles tiles))
 
 (defmacro defwangtiles (name &body tiles-sides)
-  (let ((tiles (gensym))
-        (tile (gensym)))
-    `(make-tileset ',name (let ((,tiles (make-hash-table)))
+  (with-gensyms  (tiles tile)
+    `(make-tileset ',name (let ((,tiles (make-hash-table :test 'equal)))
                             (dolist (,tile ',tiles-sides ,tiles)
                               (setf (gethash (apply 'make-wang-tile ',name ,tile) ,tiles) t))))))
 
 (defun all-valid-neighbours (tileset tile dir)
-  (let ((valid-neighbours (make-hash-table :test #'eq
+  (let ((valid-neighbours (make-hash-table :test 'equal
                                            :size (hash-table-size (tileset-tiles tileset)))))
     (dotiles (t2 tileset)
              (when (valid-neighbour-p tile t2 dir)

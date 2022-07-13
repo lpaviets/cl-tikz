@@ -67,7 +67,7 @@ where OPT-ARGS is a list formatted as in `format-options'"
 (defmacro with-preamble-to-file ((filename &key (documentclass :standalone) packages)
                                  (&rest keys &key &allow-other-keys)
                                  &body body)
-  (let ((stream (gensym)))
+  (with-gensyms (stream)
     `(with-open-file (,stream
                       ,filename
                       :direction :output

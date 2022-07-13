@@ -1,5 +1,9 @@
 (in-package #:cl-tikz)
 
+(defun draw-line (x1 y1 x2 y2 &key options)
+  (with-tikz-command (draw :options options)
+    (format t " ~A -- ~A" (point-str x1 y1) (point-str x2 y2))))
+
 (defun draw-rectangle (xmin ymin xmax ymax &key options)
   (with-tikz-command (draw :options options)
     (format t " ~A rectangle ~A" (point-str xmin ymin) (point-str xmax ymax))))
