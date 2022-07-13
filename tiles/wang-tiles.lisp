@@ -11,16 +11,20 @@
                   :accessor draw-function
                   :type function
                   :documentation "Function of one argument, a POINT (X, Y),
- used to draw the tile at the position (X, Y)"))
+ used to draw the tile at the position (X, Y)
+A tile has to implement the following methods to be used in the solver:
+- VALID-NEIGHBOUR-P
+A class deriving from TILE can also implement the following helper methods
+to be able to define tiles more easily:
+- MAKE-ROTATED-TILE"))
     (:default-initargs
      :tileset (error "A tileset is required for each Wang tile")))
 
 (defclass wang-tile (tile)
   ((sides :initarg :sides
-          :type (array keyword (4))
+          :type (array t (4))
           :reader sides
-          :documentation "In case the tile is really a Wang Tile with
-coloured sides, this slot represents those sides in order left, down,
+          :documentation "This slot represents those sides in order left, down,
 right and up."))
   (:documentation "Class representing Wang tiles.
 A tile is said to be a Wang Tile if it is only defined by its sides, which
@@ -31,7 +35,7 @@ in turn determine the valid ajaacency rules.")
 
 (defclass variant-wang-tile (tile)
   ((sides :initarg :sides
-          :type (array keyword (4))
+          :type (array t (4))
           :reader sides
           :documentation "This slot represents the sides in order left, down,
 right and up. Those keywords simply represent the side of the tile, and
@@ -55,6 +59,39 @@ next to this tile, in the corresponding direction.")))
                    :sides sides
                    :draw-function draw-fun)))
 
+
+(defgeneric make-rotated-tile (tile turns)
+  (:documentation "Create a tile that is a copy of TILE, rotated counter-clockwise
+by TURNS quarter-turns."))
+
+(defmethod make-rotated-tile ((tile wang-tile) turns)
+  (with-accessors ((tileset tileset)
+                   (draw-function draw-function)
+                   (sides sides))
+      tile
+    (let ((draw-fun (lambda (pos)
+                      (with-rotation (* turns (/ pi 2)) ((point-x pos) (point-y pos))
+                        (funcall draw-function pos)))))
+      (make-instance 'wang-tile
+                     :tileset tileset
+                     :sides (rotate-sequence sides turns)
+                     :draw-function draw-fun))))
+
+(defmethod make-rotated-tile ((tile variant-wang-tile) turns)
+  (with-accessors ((tileset tileset)
+                   (draw-function draw-function)
+                   (sides sides)
+                   (valid-neighbours valid-neighbours))
+      tile
+    (let ((draw-fun (lambda (pos)
+                      (with-rotation (* turns (/ pi 2)) ((point-x pos) (point-y pos))
+                        (funcall draw-function pos)))))
+      (make-instance 'variant-wang-tile
+                     :tileset tileset
+                     :sides (rotate-sequence sides turns)
+                     :draw-function draw-fun
+                     :neighbours (rotate-sequence valid-neighbours turns)))))
+
 (declaim (inline side-to-digit))
 (defun side-to-digit (dir)
   (ccase dir
@@ -68,7 +105,7 @@ next to this tile, in the corresponding direction.")))
   (aref (sides tile) (side-to-digit dir)))
 
 (defmacro with-tile-sides ((left down right up) tile &body body)
-  (let ((gtile (gensym)))
+  (with-gensyms (gtile)
     `(let* ((,gtile ,tile))
        (let ((,left (tile-colour ,gtile :left))
              (,down (tile-colour ,gtile :down))
@@ -93,10 +130,10 @@ next to this tile, in the corresponding direction.")))
   (with-tile-sides (l1 d1 r1 u1) t1
     (with-tile-sides (l2 d2 r2 u2) t2
       (ccase dir
-        (0 (eql l1 r2))
-        (1 (eql d1 u2))
-        (2 (eql r1 l2))
-        (3 (eql u1 d2))))))
+        (0 (equal l1 r2))
+        (1 (equal d1 u2))
+        (2 (equal r1 l2))
+        (3 (equal u1 d2))))))
 
 (defmethod valid-neighbour-p ((t1 variant-wang-tile) (t2 variant-wang-tile) dir)
   (with-tile-sides (l1 d1 r1 u1) t1
