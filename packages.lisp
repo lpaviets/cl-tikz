@@ -32,6 +32,7 @@
    #:draw-long-path
    #:with-random-crop
    ;; Utilities
+   #:xor
    #:symb
    #:capture-stdout
    #:with-gensyms

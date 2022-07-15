@@ -1,5 +1,22 @@
 (in-package #:cl-tikz)
 
+(defmacro xor (&rest forms)
+  "XOR evaluates each form of FORMS, left to right.
+The evaluation terminates when exactly two forms evaluate to true.
+The final result is either FORM when FORM is the only form of FORM
+that evaluates to true, or NIL otherwise. In the first case, all
+the forms have been evaluated"
+  (with-gensyms (flag current xor-block)
+    `(block ,xor-block
+       (let ((,flag nil))
+         ,@(loop :for form :in forms
+                 :collect `(let ((,current ,form))
+                             (when ,current
+                               (if ,flag
+                                   (return-from ,xor-block nil)
+                                   (setf ,flag ,current)))))
+         ,flag))))
+
 (defun mkstr (&rest args)
   (with-output-to-string (s)
     (dolist (a args) (princ a s))))
