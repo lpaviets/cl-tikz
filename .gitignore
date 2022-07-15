@@ -9,6 +9,6 @@
 *.fls
 /auto/
 /test-output.synctex.gz
-/tiles/auto/
+/cl-tikz-tilings/auto/
 *.gz
-/tiles/examples/auto/
+/cl-tikz-tilings/examples/auto/

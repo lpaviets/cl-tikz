@@ -1,4 +1,4 @@
-(in-package #:cl-tikz/tiles)
+(in-package #:cl-tikz-tilings)
 
 ;;; Dancing Links X algorithm
 ;;; From https://github.com/desmondcheongzx/dancing-links

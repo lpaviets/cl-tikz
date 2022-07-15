@@ -1,4 +1,4 @@
-(in-package #:cl-tikz/tiles)
+(in-package #:cl-tikz-tilings)
 
 (defclass hom-shift-tile (tile)
   ((colour :initarg :colour

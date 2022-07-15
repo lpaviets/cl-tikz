@@ -1,4 +1,4 @@
-(in-package #:cl-tikz/tiles)
+(in-package #:cl-tikz-tilings)
 
 (defun draw-wang-tile (x y left down right up &key (size 1))
   (let ((d (/ size 2)))

@@ -1,4 +1,4 @@
-;;;; package.lisp
+;;;; packages.lisp
 
 (defpackage #:cl-tikz/math
   (:use #:cl)
@@ -46,14 +46,3 @@
    #:with-env
    #:with-tikz-command
    #:with-preamble-to-file))
-
-(defpackage #:cl-tikz/tiles
-  (:use #:cl #:cl-tikz #:cl-tikz/math)
-  (:export
-   ;; Tiles
-   #:deftile
-   #:draw-tiling
-   #:def-wang-tileset
-   ;; Solver
-   #:solve-naive
-   #:solve-dancing-links))
