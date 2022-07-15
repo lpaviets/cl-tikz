@@ -49,10 +49,10 @@ Each hash-table contains the 'colours' of the tiles that can be placed
 next to this tile, in the corresponding direction.")))
 
 ;;; Initialization
-(defmethod initialize-instance :after ((tile tile) &key (turns 0) &allow-other-keys)
+(defmethod initialize-instance :after ((tile tile) &key)
   (unless (slot-boundp tile 'draw-function)
     (setf (slot-value tile 'draw-function)
-          (make-tile-drawing-function tile turns))))
+          (make-tile-drawing-function tile))))
 
 ;;; Utilities
 (declaim (inline side-to-digit))
@@ -92,17 +92,14 @@ by TURNS quarter-turns."))
 
 (defmethod make-rotated-tile ((tile wang-tile) turns)
   (with-accessors ((tileset tileset)
-                   (draw-function draw-function)
                    (sides sides))
       tile
     (make-instance 'wang-tile
                    :tileset tileset
-                   :sides (rotate-sequence sides turns)
-                   :turns turns)))
+                   :sides (rotate-sequence sides turns))))
 
 (defmethod make-rotated-tile ((tile variant-wang-tile) turns)
   (with-accessors ((tileset tileset)
-                   (draw-function draw-function)
                    (sides sides)
                    (valid-neighbours valid-neighbours))
       tile
@@ -135,23 +132,22 @@ by TURNS quarter-turns."))
       (gethash colour-to-check allowed-colours))))
 
 ;;; Drawing function
-(defmacro def-drawing-function ((&optional (turns 0)) &body body)
+(defmacro def-drawing-function (() &body body)
   "Return a function of one argument, a point POS, that draws BODY,
- rotated by TURNS quarter-turns and shifted by POS.
+shifted by POS.
 This means that BODY can draw relative to the origin (0, 0)."
   (with-gensyms (pos)
     `(lambda (,pos)
-       (with-rotation (* ,turns (/ pi 2)) ()
-           (with-shift ((point-x ,pos) (point-y ,pos))
-             ,@body)))))
+       (with-shift ((point-x ,pos) (point-y ,pos))
+         ,@body))))
 
-(defgeneric make-tile-drawing-function (tile &optional turns)
+(defgeneric make-tile-drawing-function (tile)
   (:documentation "Return a function of one argument, a point POS, that draws
 the tile TILE at position POS.
 When defining methods on this generic function, you should use the
 DEF-DRAWING-FUNCTION macro."))
 
-(defmethod make-tile-drawing-function ((tile wang-tile) &optional (turns 0))
+(defmethod make-tile-drawing-function ((tile wang-tile))
   (with-tile-sides (left down right up) tile
-    (def-drawing-function (turns)
+    (def-drawing-function ()
       (draw-wang-tile 0 0 left down right up))))

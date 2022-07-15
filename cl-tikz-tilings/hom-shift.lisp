@@ -11,8 +11,8 @@ next to this tile."))
    :colour (error "Must specify a colour when defining a Hom-Shift tile")))
 
 ;;; Hom-Shift
-(defmethod make-tile-drawing-function ((tile hom-shift-tile) &optional (turns 0))
-  (def-drawing-function (turns)
+(defmethod make-tile-drawing-function ((tile hom-shift-tile))
+  (def-drawing-function ()
     (draw-square -0.5 -0.5 :options `((fill . ,(colour tile))))))
 
 (defun make-hom-shift-tile (tileset colour valid-neighbours)

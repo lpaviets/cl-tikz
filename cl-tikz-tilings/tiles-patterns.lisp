@@ -99,11 +99,22 @@
                                new-shifted
                                arrow))))
 
+(defmethod make-rotated-tile ((tile robinson-tile) turns)
+  (let ((new-sides (map '(array robinson-tile-side (4))
+                        (lambda (side)
+                          (rotate-robinson-tile-side side turns))
+                        (sides tile))))
+    (make-instance 'robinson-tile
+                   :tileset (tileset tile)
+                   :cornerp (cornerp tile)
+                   :sides (rotate-sequence new-sides turns))))
+
 (defun robinson-tile-side-matching-p (side1 side2)
   (and (eq (robinson-side-colour side1) (robinson-side-colour side2))
        (eq (robinson-side-shifted side1) (robinson-side-shifted side2))
        (not (eq (robinson-side-arrow side1) (robinson-side-colour side2)))))
 
+;; TODO: fix neighbours, CORNERP doesn't seem that simple
 (defmethod valid-neighbour-p ((t1 robinson-tile) (t2 robinson-tile) dir)
   (and (xor (cornerp t1) (cornerp t2))
        (with-tile-sides (l1 d1 r1 u1) t1
@@ -118,9 +129,9 @@
   (let ((arrowinp (eq (robinson-side-arrow side) :in)))
    (option-arrow-head-at (if arrowinp 0.6 0.95) arrowinp :style 'latex)))
 
-(defmethod make-tile-drawing-function ((tile robinson-tile) &optional (turns 0))
+(defmethod make-tile-drawing-function ((tile robinson-tile))
   (with-tile-sides (left down right up) tile
-    (def-drawing-function (turns)
+    (def-drawing-function ()
       (draw-square -0.5 -0.5)
       ;; Up side
       (with-accessors ((colour robinson-side-colour)
