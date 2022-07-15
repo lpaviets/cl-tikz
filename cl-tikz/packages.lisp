@@ -11,6 +11,7 @@
    #:point-y
    #:with-point
    #:point-neighbours
+   #:point-all-neighbours
    ;; Macros
    #:with-rotation
    #:with-reset-rotation

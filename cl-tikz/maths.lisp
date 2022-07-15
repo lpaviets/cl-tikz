@@ -15,12 +15,29 @@
      ,@body))
 
 (defun point-neighbours (point)
+  "Return the four adjacent points to POINT, in order left, down, right
+and up when compared to it, as a list"
   (with-point (x y) point
     (let ((left (point (1- x) y))
           (down (point x (1- y)))
           (right (point (1+ x) y))
           (up (point x (1+ y))))
       (list left down right up))))
+
+(defun point-all-neighbours (point)
+  "Return the eight adjacent points to POINT, in order left, down-left,
+down, down-right, right, up-right, up, up-left when compared to it, as
+a list"
+  (with-point (x y) point
+    (let ((left (point (1- x) y))
+          (down-left (point (1- x) (1- y)))
+          (down (point x (1- y)))
+          (down-right (point (1+ x) (1- y)))
+          (right (point (1+ x) y))
+          (up-right (point (1+ x) (1+ y)))
+          (up (point x (1+ y)))
+          (up-left (point (1- x) (1+ y))))
+      (list left down-left down down-right right up-right up up-left))))
 
 (defvar *rotation-angle* 0d0)
 (defvar *rotation-center* (point 0 0))
