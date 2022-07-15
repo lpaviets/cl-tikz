@@ -31,7 +31,15 @@
    #:draw-grid
    #:draw-long-path
    #:with-random-crop
-   ;; Utilities
+   ;; Other drawing utilities
+   #:option-arrow-head-at
+   ;; LaTeX/TikZ utilities
+   #:format-options
+   #:latex-command
+   #:with-env
+   #:with-tikz-command
+   #:with-preamble-to-file
+   ;; Generi utilities
    #:xor
    #:symb
    #:capture-stdout
@@ -40,9 +48,4 @@
    #:list-to-set
    #:set-to-list
    #:nshuffle
-   #:rotate-sequence
-   #:format-options
-   #:latex-command
-   #:with-env
-   #:with-tikz-command
-   #:with-preamble-to-file))
+   #:rotate-sequence))

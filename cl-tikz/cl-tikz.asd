@@ -10,5 +10,6 @@
                (:file "utils")
                (:file "maths")
                (:file "helpers")
+               (:file "arrows")
                (:file "shapes")
                (:file "cl-tikz")))
