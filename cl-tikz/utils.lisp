@@ -42,10 +42,11 @@ Binds the symbols SYM to an uninterned symbol, as if using gensym."
 
 (defmacro dohash ((key &optional val) table &body body)
   (with-gensyms (gval)
-   `(maphash (lambda (,key ,(or val gval))
-               (declare (ignorable ,key ,(or val gval)))
-               ,@body)
-             ,table)))
+    `(block nil
+       (maphash (lambda (,key ,(or val gval))
+                  (declare (ignorable ,key ,(or val gval)))
+                  ,@body)
+                ,table))))
 
 (defun list-to-set (list)
   (let ((table (make-hash-table)))
