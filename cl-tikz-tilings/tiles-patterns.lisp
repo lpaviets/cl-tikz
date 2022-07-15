@@ -38,17 +38,30 @@
     (:blue :green)
     (:green :red)))
 
-
-(defvar *robinson*)
+;;; Difficulty
+;;; Robinson tiles usually involve *corner* adjacency rules.
+;;; Even worse: the rule is something like "each corner of the grid has to
+;;; see at least one tile of type X"
+;;; Solution: in the solver, replace FIND-ALL-VALID-TILEs - which itself
+;;; uses only TILE-FITS-WITH-P, and therefore only neighbours - by a
+;;; suitable function.
 (defclass robinson-tile (tile)
   ((cornerp :initarg :cornerp
             :reader cornerp
-            :type boolean)
-  (sides :initarg :sides
+            :type boolean
+            :documentation "Whether the tile is a corner or not.
+This is used to determine how to draw the tile.")
+   (parity :initarg :parity
+           :reader parity
+           :type boolean
+           :documentation "Whether the tile is a \"parity tile\" or not.
+The rule is that two parity tiles can't be placed next to each other.")
+   (sides :initarg :sides
           :type (array robinson-tile-side (4))
           :reader sides))
   (:default-initargs
-   :cornerp (error "Must specify whether the tile is a corner tile")))
+   :cornerp (error "Must specify whether the tile is a corner tile")
+   :parity (error "Must specify whether the tile is a parity tile")))
 
 (defclass robinson-tile-side ()
   ((colour :initarg :colour
@@ -67,7 +80,7 @@
                  :shifted shifted
                  :arrow arrow))
 
-(defun make-robinson-tile (tileset cornerp left down right up)
+(defun make-robinson-tile (tileset cornerp parity left down right up)
   "Each of LEFT, DOWN, RIGHT and UP is a list of length 3, of the form
 (COLOUR SHIFTEDP ARROW)"
   (flet ((make-side (arg)
@@ -78,7 +91,8 @@
       (make-instance 'robinson-tile
                      :tileset tileset
                      :sides sides
-                     :cornerp cornerp))))
+                     :cornerp cornerp
+                     :parity parity))))
 
 (defun rotate-robinson-tile-side (side turns)
   (with-accessors ((colour robinson-side-colour)
@@ -107,19 +121,20 @@
     (make-instance 'robinson-tile
                    :tileset (tileset tile)
                    :cornerp (cornerp tile)
+                   :parity (parity tile)
                    :sides (rotate-sequence new-sides turns))))
 
 (defun robinson-tile-side-matching-p (side1 side2)
   (and (eq (robinson-side-colour side1) (robinson-side-colour side2))
        (eq (robinson-side-shifted side1) (robinson-side-shifted side2))
-       (not (eq (robinson-side-arrow side1) (robinson-side-colour side2)))))
+       (not (eq (robinson-side-arrow side1) (robinson-side-arrow side2)))))
 
-;; TODO: fix neighbours, CORNERP doesn't seem that simple
 (defmethod valid-neighbour-p ((t1 robinson-tile) (t2 robinson-tile) dir)
-  (and (xor (cornerp t1) (cornerp t2))
+  (and (or (not (parity t1))
+           (not (parity t2))) ; Can't have 2 adjacent corner tile
        (with-tile-sides (l1 d1 r1 u1) t1
          (with-tile-sides (l2 d2 r2 u2) t2
-           (ccase dir
+           (ecase dir
              (0 (robinson-tile-side-matching-p l1 r2))
              (1 (robinson-tile-side-matching-p d1 u2))
              (2 (robinson-tile-side-matching-p r1 l2))
@@ -127,12 +142,18 @@
 
 (defun robinson-side-arrow-to-tikz-options (side)
   (let ((arrowinp (eq (robinson-side-arrow side) :in)))
-   (option-arrow-head-at (if arrowinp 0.6 0.95) arrowinp :style 'latex)))
+   (option-arrow-head-at (if arrowinp 0.7 0.98) arrowinp :style 'latex)))
 
 (defmethod make-tile-drawing-function ((tile robinson-tile))
   (with-tile-sides (left down right up) tile
     (def-drawing-function ()
       (draw-square -0.5 -0.5)
+      (when (parity tile)
+        (dolist (x '(-0.5 0.45))
+          (dolist (y '(-0.5 0.45))
+            (draw-square x y
+                         :size 0.05
+                         :options '((fill . yellow))))))
       ;; Up side
       (with-accessors ((colour robinson-side-colour)
                        (shifted robinson-side-shifted)
@@ -142,7 +163,7 @@
                        (:center 0)
                        (:left -0.25)
                        (:right 0.25)))
-              (height (if (cornerp tile) -0.25 0)))
+              (height (if (and (cornerp tile) (eq colour :red)) -0.25 0)))
           (draw-line width height width 0.5
                      :options `(,(robinson-side-arrow-to-tikz-options up)
                                 ,colour))))
@@ -156,7 +177,7 @@
                         (:center 0)
                         (:down -0.25)
                         (:up 0.25)))
-              (width (if (cornerp tile) 0.25 0)))
+              (width (if (and (cornerp tile) (eq colour :red)) 0.25 0)))
           (draw-line width height -0.5 height
                      :options `(,(robinson-side-arrow-to-tikz-options left)
                                 ,colour))))
@@ -170,7 +191,7 @@
                        (:center 0)
                        (:left -0.25)
                        (:right 0.25)))
-              (height (if (cornerp tile) 0.25 0)))
+              (height (if (and (cornerp tile) (eq colour :red)) 0.25 0)))
           (draw-line width height width -0.5
                      :options `(,(robinson-side-arrow-to-tikz-options down)
                                 ,colour))))
@@ -184,7 +205,53 @@
                         (:center 0)
                         (:down -0.25)
                         (:up 0.25)))
-              (width (if (cornerp tile) -0.25 0)))
+              (width (if (and (cornerp tile) (eq colour :red)) -0.25 0)))
           (draw-line width height 0.5 height
                      :options `(,(robinson-side-arrow-to-tikz-options right)
                                 ,colour)))))))
+
+(defvar *robinson*
+  (let ((robinson-tiles (make-hash-table :test 'eq)))
+    (dolist (tile (list (make-robinson-tile 'robinson t t
+                                            '(:green :center :out)
+                                            '(:red :left :out)
+                                            '(:red :up :out)
+                                            '(:green :center :out))
+                        (make-robinson-tile 'robinson t nil
+                                            '(:green :center :out)
+                                            '(:red :left :out)
+                                            '(:red :up :out)
+                                            '(:green :center :out))
+                        (make-robinson-tile 'robinson nil nil
+                                            '(:green :center :in)
+                                            '(:green :center :in)
+                                            '(:green :center :in)
+                                            '(:green :center :out))
+                        (make-robinson-tile 'robinson nil nil
+                                            '(:green :center :in)
+                                            '(:red :left :in)
+                                            '(:green :center :in)
+                                            '(:red :left :out))
+                        (make-robinson-tile 'robinson nil nil
+                                            '(:green :center :in)
+                                            '(:red :right :in)
+                                            '(:green :center :in)
+                                            '(:red :right :out))
+                        (make-robinson-tile 'robinson nil nil
+                                            '(:red :up :in)
+                                            '(:green :center :in)
+                                            '(:red :up :in)
+                                            '(:green :center :out))
+                        (make-robinson-tile 'robinson nil nil
+                                            '(:red :up :in)
+                                            '(:red :left :in)
+                                            '(:red :up :in)
+                                            '(:red :left :out))
+                        (make-robinson-tile 'robinson nil nil
+                                            '(:red :up :in)
+                                            '(:red :right :in)
+                                            '(:red :up :in)
+                                            '(:red :right :out))))
+      (dotimes (turns 4)
+        (setf (gethash (make-rotated-tile tile turns) robinson-tiles) t))
+      (make-tileset 'robinson robinson-tiles))))
