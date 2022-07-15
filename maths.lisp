@@ -48,7 +48,7 @@
                                  '*rotation-center*)))
      ,@body))
 
-(defmacro with-shift (x y &body body)
+(defmacro with-shift ((x y) &body body)
   `(let ((*origin* (add-point *origin* (point ,x ,y))))
      ,@body))
 

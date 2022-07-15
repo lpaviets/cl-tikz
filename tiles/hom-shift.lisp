@@ -11,19 +11,15 @@ next to this tile."))
    :colour (error "Must specify a colour when defining a Hom-Shift tile")))
 
 ;;; Hom-Shift
-(defun make-hom-shift-drawing-function (colour)
-  (lambda (pos)
-    (with-point (x y) pos
-      (draw-square (- x 0.5) (- y 0.5) :options `((fill . ,colour))))))
+(defmethod make-tile-drawing-function ((tile hom-shift-tile) &optional (turns 0))
+  (def-drawing-function (turns)
+    (draw-square -0.5 -0.5 :options `((fill . ,(colour tile))))))
 
-(defun make-hom-shift-tile (tileset colour valid-neighbours &key draw)
-  (let* ((draw-fun (or draw
-                       (make-hom-shift-drawing-function colour))))
-    (make-instance 'hom-shift-tile
-                   :tileset tileset
-                   :colour colour
-                   :draw-function draw-fun
-                   :neighbours valid-neighbours)))
+(defun make-hom-shift-tile (tileset colour valid-neighbours)
+  (make-instance 'hom-shift-tile
+                 :tileset tileset
+                 :colour colour
+                 :neighbours valid-neighbours))
 
 (defun make-hom-shift-from-edges (name edges)
   (let ((all-colours (make-hash-table :test 'equal)))
@@ -52,8 +48,8 @@ next to this tile."))
   (member (colour t2) (valid-neighbours t1)))
 
 (defmethod make-rotated-tile ((tile hom-shift-tile) turns)
+  (declare (ignore turns))
   (make-instance 'hom-shift-tile
                  :tileset (tileset tile)
                  :colour (colour tile)
-                 :draw-function (draw-function tile)
                  :neighbours (valid-neighbours tile)))

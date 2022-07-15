@@ -7,8 +7,7 @@
             :reader tileset
             :type (or tileset symbol)
             :documentation "The tileset to which this tile belongs")
-   (draw-function :initarg :draw-function
-                  :accessor draw-function
+   (draw-function :accessor draw-function
                   :type function
                   :documentation "Function of one argument, a POINT (X, Y),
  used to draw the tile at the position (X, Y)
@@ -16,7 +15,8 @@ A tile has to implement the following methods to be used in the solver:
 - VALID-NEIGHBOUR-P
 A class deriving from TILE can also implement the following helper methods
 to be able to define tiles more easily:
-- MAKE-ROTATED-TILE"))
+- MAKE-ROTATED-TILE
+- MAKE-TILE-DRAWING-FUNCTION"))
     (:default-initargs
      :tileset (error "A tileset is required for each Wang tile")))
 
@@ -48,50 +48,13 @@ Each one corresponds to a direction, in order left, down, right, up.
 Each hash-table contains the 'colours' of the tiles that can be placed
 next to this tile, in the corresponding direction.")))
 
-(defun make-wang-tile (tileset left down right up &key draw)
-  (let ((sides (make-array 4
-                           :element-type 'keyword
-                           :initial-contents (list left down right up)))
-        (draw-fun (or draw
-                      (make-wang-drawing-function left down right up))))
-    (make-instance 'wang-tile
-                   :tileset tileset
-                   :sides sides
-                   :draw-function draw-fun)))
+;;; Initialization
+(defmethod initialize-instance :after ((tile tile) &key (turns 0) &allow-other-keys)
+  (unless (slot-boundp tile 'draw-function)
+    (setf (slot-value tile 'draw-function)
+          (make-tile-drawing-function tile turns))))
 
-
-(defgeneric make-rotated-tile (tile turns)
-  (:documentation "Create a tile that is a copy of TILE, rotated counter-clockwise
-by TURNS quarter-turns."))
-
-(defmethod make-rotated-tile ((tile wang-tile) turns)
-  (with-accessors ((tileset tileset)
-                   (draw-function draw-function)
-                   (sides sides))
-      tile
-    (let ((draw-fun (lambda (pos)
-                      (with-rotation (* turns (/ pi 2)) ((point-x pos) (point-y pos))
-                        (funcall draw-function pos)))))
-      (make-instance 'wang-tile
-                     :tileset tileset
-                     :sides (rotate-sequence sides turns)
-                     :draw-function draw-fun))))
-
-(defmethod make-rotated-tile ((tile variant-wang-tile) turns)
-  (with-accessors ((tileset tileset)
-                   (draw-function draw-function)
-                   (sides sides)
-                   (valid-neighbours valid-neighbours))
-      tile
-    (let ((draw-fun (lambda (pos)
-                      (with-rotation (* turns (/ pi 2)) ((point-x pos) (point-y pos))
-                        (funcall draw-function pos)))))
-      (make-instance 'variant-wang-tile
-                     :tileset tileset
-                     :sides (rotate-sequence sides turns)
-                     :draw-function draw-fun
-                     :neighbours (rotate-sequence valid-neighbours turns)))))
-
+;;; Utilities
 (declaim (inline side-to-digit))
 (defun side-to-digit (dir)
   (ccase dir
@@ -114,11 +77,41 @@ by TURNS quarter-turns."))
          (declare (ignorable ,left ,down ,right ,up))
          ,@body))))
 
-(defun make-wang-drawing-function (left down right up &optional (turns 0))
-  (lambda (pos)
-    (with-rotation (* turns (/ pi 2)) ((point-x pos) (point-y pos))
-      (draw-wang-tile (point-x pos) (point-y pos) left down right up))))
+(defun make-wang-tile (tileset left down right up)
+  (let ((sides (make-array 4
+                           :element-type 'keyword
+                           :initial-contents (list left down right up))))
+    (make-instance 'wang-tile
+                   :tileset tileset
+                   :sides sides)))
 
+;;; Rotation
+(defgeneric make-rotated-tile (tile turns)
+  (:documentation "Create a tile that is a copy of TILE, rotated counter-clockwise
+by TURNS quarter-turns."))
+
+(defmethod make-rotated-tile ((tile wang-tile) turns)
+  (with-accessors ((tileset tileset)
+                   (draw-function draw-function)
+                   (sides sides))
+      tile
+    (make-instance 'wang-tile
+                   :tileset tileset
+                   :sides (rotate-sequence sides turns)
+                   :turns turns)))
+
+(defmethod make-rotated-tile ((tile variant-wang-tile) turns)
+  (with-accessors ((tileset tileset)
+                   (draw-function draw-function)
+                   (sides sides)
+                   (valid-neighbours valid-neighbours))
+      tile
+    (make-instance 'variant-wang-tile
+                   :tileset tileset
+                   :sides (rotate-sequence sides turns)
+                   :neighbours (rotate-sequence valid-neighbours turns))))
+
+;;; Adjacency rules
 (defgeneric valid-neighbour-p (t1 t2 dir)
   (:method :around ((t1 tile) (t2 tile) dir)
     (setf dir (side-to-digit dir))
@@ -140,3 +133,25 @@ by TURNS quarter-turns."))
     (let ((allowed-colours (aref (valid-neighbours t2) dir))
           (colour-to-check (tile-colour t1 dir)))
       (gethash colour-to-check allowed-colours))))
+
+;;; Drawing function
+(defmacro def-drawing-function ((&optional (turns 0)) &body body)
+  "Return a function of one argument, a point POS, that draws BODY,
+ rotated by TURNS quarter-turns and shifted by POS.
+This means that BODY can draw relative to the origin (0, 0)."
+  (with-gensyms (pos)
+    `(lambda (,pos)
+       (with-rotation (* ,turns (/ pi 2)) ()
+           (with-shift ((point-x ,pos) (point-y ,pos))
+             ,@body)))))
+
+(defgeneric make-tile-drawing-function (tile &optional turns)
+  (:documentation "Return a function of one argument, a point POS, that draws
+the tile TILE at position POS.
+When defining methods on this generic function, you should use the
+DEF-DRAWING-FUNCTION macro."))
+
+(defmethod make-tile-drawing-function ((tile wang-tile) &optional (turns 0))
+  (with-tile-sides (left down right up) tile
+    (def-drawing-function (turns)
+      (draw-wang-tile 0 0 left down right up))))
