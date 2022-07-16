@@ -1,5 +1,16 @@
 (in-package #:cl-tikz)
 
+(defmacro with-gensyms (gensyms &body body)
+  "GENSYMS is a list of symbols SYM.
+Binds the symbols SYM to an uninterned symbol, as if using gensym."
+  (loop :for sym :in gensyms
+        :for gensym = (gensym (symbol-name sym))
+        :if (symbolp sym)
+          :collect `(,sym ',gensym) :into gensym-list
+        :finally
+           (return `(let ,gensym-list
+                      ,@body))))
+
 (defmacro xor (&rest forms)
   "XOR evaluates each form of FORMS, left to right.
 The evaluation terminates when exactly two forms evaluate to true.
@@ -28,17 +39,6 @@ the forms have been evaluated"
   (typecase designator
     ((or string symbol) (string-downcase (string designator)))
     (t (princ-to-string designator))))
-
-(defmacro with-gensyms (gensyms &body body)
-  "GENSYMS is a list of symbols SYM.
-Binds the symbols SYM to an uninterned symbol, as if using gensym."
-  (loop :for sym :in gensyms
-        :for gensym = (gensym (symbol-name sym))
-        :if (symbolp sym)
-          :collect `(,sym ',gensym) :into gensym-list
-        :finally
-           (return `(let ,gensym-list
-                      ,@body))))
 
 (defmacro dohash ((key &optional val) table &body body)
   (with-gensyms (gval)

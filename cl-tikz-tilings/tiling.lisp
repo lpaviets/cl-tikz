@@ -17,13 +17,21 @@
                  :type function
                  :documentation "Function of two arguments, a TILING and a POINT. Can assume that
 POINT is in the bounds of TILING, and should return the tile located at
-position POINT in TILING, or NIL if no such tile exists."))
+position POINT in TILING, or NIL if no such tile exists.")
+   (find-valid-tiles-fun :initarg :find-valid-tiles
+                         :reader find-valid-tiles-fun
+                         :type (or function symbol)
+                         :documentation "Function of two arguments, a POINT and a TILING. Can
+assume that POINT is in the bounds of TILING, and should return a list
+of all the valid tiles that can - locally - be placed at POINT.
+The list need not be a fresh list."))
   (:default-initargs
    :tileset (error "A tileset is required to define a tiling")
    :surface (error "A surface is required to define a tiling")
-   :bounds (error "A bounding function is required to define a tiling")))
+   :bounds (error "A bounding function is required to define a tiling")
+   :find-valid-tiles 'find-all-valid-tiles))
 
-(defun make-tiling-grid (tileset width height)
+(defun make-tiling-grid (tileset width height &rest args)
   "Return a new empty tiling, using TILESET as its tileset, and which
 tiles an WIDTHxHEIGHT rectangular grid"
   (let ((grid (make-array (list height width) :initial-element nil)))
@@ -33,11 +41,13 @@ tiles an WIDTHxHEIGHT rectangular grid"
                     (<= 0 y (1- height)))))
            (grid-tile-fun (tiling pos)
              (aref (surface tiling) (point-y pos) (point-x pos))))
-      (make-instance 'tiling
-                     :tileset tileset
-                     :surface grid
-                     :bounds #'grid-bounds
-                     :tile-fun #'grid-tile-fun))))
+      (apply #'make-instance
+             'tiling
+             :tileset tileset
+             :surface grid
+             :bounds #'grid-bounds
+             :tile-fun #'grid-tile-fun
+             args))))
 
 (defun copy-tiling (tiling)
   (with-accessors ((tileset tileset)

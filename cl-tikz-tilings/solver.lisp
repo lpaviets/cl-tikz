@@ -16,16 +16,17 @@ position in the bounds of tiling as a POINT"
     (unless tile
       (return-from block-iter pos))))
 
-(defun solve-naive (tiling &key random (find-candidates 'find-all-valid-tiles))
+(defun solve-naive (tiling &key random)
   "Solve TILING using a naive approach, similar to a DFS.
 If RANDOM is non-nil, the nodes are explored in a random order, i.e.
 tiles are tried non-deterministically.
 Otherwise, the order is defined by (DOTILES (TILE (TILESET TILING)) ...)"
   (loop :with copied-tiling = (copy-tiling tiling)
+        :with find-valid-tiles = (find-valid-tiles-fun tiling)
         :with history = ()
         :for empty-pos = (find-empty-cell copied-tiling)
         :for possible-tiles = (when empty-pos
-                                (funcall find-candidates empty-pos copied-tiling))
+                                (funcall find-valid-tiles empty-pos copied-tiling))
         ;; If we have no empty position, our job is done
         :unless empty-pos
           :do (return (tiling-valid-p copied-tiling))
