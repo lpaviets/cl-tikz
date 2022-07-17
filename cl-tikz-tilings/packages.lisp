@@ -4,7 +4,6 @@
   (:use #:cl #:cl-tikz #:cl-tikz/math)
   (:export
    ;; Tiles
-   #:deftile
    #:draw-tiling
    #:def-wang-tileset
    ;; Solver
