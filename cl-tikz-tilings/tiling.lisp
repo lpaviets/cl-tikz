@@ -88,26 +88,18 @@ position as a POINT, and TILE to the element of TILING at position POS,
 or NIL otherwise.
 Starts at the bottom-left corner (pos (0, 0)), and iterates row-wise.
 Wraps the iteration in a block called BLOCK-NAME"
-  (let ((height (gensym "HEIGHT"))
-        (h (gensym "H"))
-        (width (gensym "WIDTH"))
-        (w (gensym "W"))
-        (gtiling (gensym "GTILING"))
-        (surface (gensym "SURFACE"))
-        (bounds (gensym "BOUNDS"))
-        (oob (gensym "OOB")))
+  (with-gensyms (height h width w (gtiling tiling) surface bounds oob)
     `(block ,block-name
-      (let ((,gtiling ,tiling))
-        (with-accessors ((,surface surface)
-                         (,bounds bounds))
-            ,gtiling
-          (destructuring-bind (,height ,width) (array-dimensions ,surface)
-            (loop :for ,h :below ,height :do
-              (loop :for ,w :below ,width
-                    :for ,pos = (point ,w ,h)
-                    :for ,tile = (tiling-tile-at ,pos ,gtiling :out-of-bounds ',oob)
-                    :unless (eq ',oob ,tile)
-                      :do ,@body))))))))
+       (with-accessors ((,surface surface)
+                        (,bounds bounds))
+           ,gtiling
+         (destructuring-bind (,height ,width) (array-dimensions ,surface)
+           (loop :for ,h :below ,height :do
+             (loop :for ,w :below ,width
+                   :for ,pos = (point ,w ,h)
+                   :for ,tile = (tiling-tile-at ,pos ,gtiling :out-of-bounds ',oob)
+                   :unless (eq ',oob ,tile)
+                     :do ,@body)))))))
 
 (defun tiling-neighbours-of (pos tiling)
   "List of four neighbours of POS in the tiling TILING

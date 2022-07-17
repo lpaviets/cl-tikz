@@ -1,15 +1,28 @@
 (in-package #:cl-tikz)
 
 (defmacro with-gensyms (gensyms &body body)
-  "GENSYMS is a list of symbols SYM.
-Binds the symbols SYM to an uninterned symbol, as if using gensym."
+  "GENSYMS is a list of symbols SYM, or of pairs (SYM VAL).
+Binds the symbols SYM to an uninterned symbol, as if using gensym.
+For each pair (SYM VAL), the value of VAL will be evaluated once before
+BODY, and bound to the gensym associated to SYM.
+Example:
+(defmacro double (x)
+  (with-gensyms ((gx x))
+    `(+ ,gx ,gx)))"
   (loop :for sym :in gensyms
-        :for gensym = (gensym (symbol-name sym))
+        :for gensym = (gensym (if (symbolp sym)
+                                  (symbol-name sym)
+                                  (symbol-name (first sym))))
         :if (symbolp sym)
           :collect `(,sym ',gensym) :into gensym-list
+        :else
+          :collect `(,(first sym) ',gensym) :into gensym-list
+          :and
+            :collect `(list ,(first sym) ,(second sym)) :into eval-list
         :finally
            (return `(let ,gensym-list
-                      ,@body))))
+                      (list 'let (list ,@eval-list)
+                            ,@body)))))
 
 (defmacro xor (&rest forms)
   "XOR evaluates each form of FORMS, left to right.
@@ -86,8 +99,8 @@ the forms have been evaluated"
 (defmacro capture-stdout (&body body)
   "Redirect all the things printed on stdout by BODY to a string, and
 return this string once BODY terminates"
-  (with-gensyms (string)
-    `(let ((,string (make-string-output-stream)))
+  (with-gensyms ((string (make-string-output-stream)))
+    `(progn
        (let ((*standard-output* ,string))
          ,@body)
        (get-output-stream-string ,string))))
