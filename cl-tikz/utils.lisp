@@ -1,4 +1,4 @@
-(in-package #:cl-tikz)
+(in-package #:org.numbra.cl-tikz)
 
 (defmacro with-gensyms (gensyms &body body)
   "GENSYMS is a list of symbols SYM, or of pairs (SYM VAL).

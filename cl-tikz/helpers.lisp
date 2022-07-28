@@ -1,4 +1,4 @@
-(in-package #:cl-tikz)
+(in-package #:org.numbra.cl-tikz)
 
 (defun format-options (options &key (newline t) mandatory)
   (let ((res (if (keywordp options)

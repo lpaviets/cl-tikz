@@ -1,6 +1,6 @@
 ;;;; packages.lisp
 
-(defpackage #:cl-tikz/math
+(defpackage #:org.numbra.cl-tikz/math
   (:use #:cl)
   (:export
    ;; Parameters
@@ -21,8 +21,8 @@
    ;; Drawing
    #:point-str))
 
-(defpackage #:cl-tikz
-  (:use #:cl #:cl-tikz/math)
+(defpackage #:org.numbra.cl-tikz
+  (:use #:cl #:org.numbra.cl-tikz/math)
   (:export
    ;; Draw paths
    #:draw-line

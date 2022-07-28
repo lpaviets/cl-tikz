@@ -1,4 +1,4 @@
-(in-package #:cl-tikz/math)
+(in-package #:org.numbra.cl-tikz/math)
 
 (defstruct point
   x

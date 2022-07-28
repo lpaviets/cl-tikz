@@ -1,4 +1,4 @@
-(in-package #:cl-tikz)
+(in-package #:org.numbra.cl-tikz)
 
 (defun draw-line (x1 y1 x2 y2 &key options)
   (with-tikz-command (draw :options options)

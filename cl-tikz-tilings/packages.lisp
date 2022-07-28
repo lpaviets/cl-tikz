@@ -1,7 +1,7 @@
 ;;;; packages.lisp
 
-(defpackage #:cl-tikz-tilings
-  (:use #:cl #:cl-tikz #:cl-tikz/math)
+(defpackage #:org.numbra.cl-tikz-tilings
+  (:use #:cl #:org.numbra.cl-tikz #:org.numbra.cl-tikz/math)
   (:export
    ;; Tiles
    #:draw-tiling

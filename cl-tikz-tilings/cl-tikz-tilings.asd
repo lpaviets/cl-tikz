@@ -13,7 +13,11 @@
                (:file "tiling")
                (:file "hom-shift")
                (:file "draw-tiles")
-               (:file "tiles-patterns")
                (:file "dancing-links")
                (:file "solver")
-               (:file "example")))
+               (:module "examples"
+                :components
+                ((:file "small-aperiodics")
+                 (:file "hom-shifts")
+                 (:file "robinson")
+                 (:file "example")))))

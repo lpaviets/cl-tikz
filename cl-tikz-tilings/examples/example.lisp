@@ -1,7 +1,7 @@
-(in-package #:cl-tikz-tilings)
+(in-package #:org.numbra.cl-tikz-tilings)
 
 (defparameter *examples-directory*
-  #P"examples/")
+  #P"output-examples/")
 
 (defun gen-example-tiling (tileset m n &key (solver 'solve-naive) (crop t))
   (let* ((filename (merge-pathnames (format nil "test-~A-~Dx~D.tex" (tileset-name tileset) m n)

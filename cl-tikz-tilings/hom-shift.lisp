@@ -1,4 +1,4 @@
-(in-package #:cl-tikz-tilings)
+(in-package #:org.numbra.cl-tikz-tilings)
 
 (defclass hom-shift-tile (tile)
   ((colour :initarg :colour

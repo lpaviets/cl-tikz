@@ -13,3 +13,4 @@
 *.gz
 /cl-tikz-tilings/examples/auto/
 /README.html
+/cl-tikz-tilings/output-examples/

@@ -1,3 +1,3 @@
 ;;;; cl-tikz.lisp
 
-(in-package #:cl-tikz)
+(in-package #:org.numbra.cl-tikz)

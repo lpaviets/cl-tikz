@@ -1,4 +1,4 @@
-(in-package #:cl-tikz-tilings)
+(in-package #:org.numbra.cl-tikz-tilings)
 
 ;;; Dancing Links X algorithm
 ;;; From https://github.com/desmondcheongzx/dancing-links
