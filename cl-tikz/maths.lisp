@@ -105,8 +105,11 @@ digits after the decimal point"
           *float-approx-digits*
           (point-y point)))
 
+(defun point-absolute-point (x y)
+  (add-point *origin* (rotate-point (point x y))))
+
 (defun point-str (x y)
   "Format the point #S(POINT :X X :Y Y) as a string, after
 having rotated it according to *ROTATION-CENTER* and *ROTATION-ANGLE*
 See `point-to-tikz' for details on the output string"
-  (point-to-tikz (add-point *origin* (rotate-point (point x y)))))
+  (point-to-tikz (point-absolute-point x y)))
