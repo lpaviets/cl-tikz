@@ -46,7 +46,11 @@
   `(with-env (scope)
      (latex-command :pgfmathsetseed :mand-args (list 12345))
      (draw-rectangle ,xmin ,ymin ,xmax ,ymax
-                     :options '((:decoration . ,(format nil "{random steps, segment length=~Amm}" step))
-                                :decorate
-                                :clip))
+                     :options
+                     (make-options :decoration
+                                   ,(format nil
+                                            "{random steps, segment length=~Amm}"
+                                            step)
+                                   :decorate t
+                                   :clip t))
      ,@body))

@@ -9,6 +9,7 @@
   :components ((:file "packages")
                (:file "utils")
                (:file "maths")
+               (:file "options")
                (:file "helpers")
                (:file "arrows")
                (:file "shapes")

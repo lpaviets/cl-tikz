@@ -36,6 +36,7 @@
    #:option-arrow-head-at
    ;; LaTeX/TikZ utilities
    #:format-options
+   #:make-options
    #:latex-command
    #:with-env
    #:with-tikz-command

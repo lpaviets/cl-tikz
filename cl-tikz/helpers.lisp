@@ -1,30 +1,16 @@
 (in-package #:org.numbra.cl-tikz)
 
-(defun format-options (options &key (newline t) mandatory)
-  (let ((res (if (keywordp options)
-                 (list (to-lowercase-string options))
-                 (mapcar (lambda (x)
-                           (if (consp x)
-                               (format nil "~A=~A"
-                                       (to-lowercase-string (car x))
-                                       (to-lowercase-string (cdr x)))
-                               (format nil "~A" (to-lowercase-string x))))
-                         options)))
-        (op (if mandatory "{" "["))
-        (cl (if mandatory "}" "]")))
-    (format t "~A~{~A~^, ~}~A~:[~;~%~]" op res cl newline)))
-
 (defun latex-command (command &key mand-args opt-args)
   (format t "\\~A" (to-lowercase-string command))
-  (when opt-args (format-options opt-args :mandatory nil :newline nil))
-  (when mand-args (format-options mand-args :mandatory t :newline nil))
+  (when opt-args (format-options t opt-args :mandatory nil :newline nil))
+  (when mand-args (format-options t mand-args :mandatory t :newline nil))
   (format t "~%"))
 
 (defmacro with-env ((env &key options) &body body)
   (let ((varenv (to-lowercase-string env)))
     `(progn
        (format t "~&\\begin{~A}" ,varenv)
-       (format-options ,options)
+       (format-options t ,options)
        ,@body
        (format t "~&\\end{~A}" ,varenv))))
 
@@ -32,7 +18,7 @@
   (let ((varcommand (to-lowercase-string command)))
    `(progn
       (format t "\\~A" ,varcommand)
-      (format-options ,options :newline nil)
+      (format-options t ,options :newline nil)
       ,@body
       (format t ";~%"))))
 
