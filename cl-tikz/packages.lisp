@@ -31,6 +31,7 @@
    #:draw-rectangle
    #:draw-square
    #:draw-node
+   #:draw-edge
    #:draw-grid
    #:draw-long-path
    #:with-random-crop

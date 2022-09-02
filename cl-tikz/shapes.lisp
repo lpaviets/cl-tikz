@@ -15,11 +15,21 @@
 
 (defun draw-grid (xmin ymin xmax ymax &key (step 1) options)
   (with-tikz-command (draw :options options)
-    (format t " ~A grid[step=~D] ~A" (point-str xmin ymin) step (point-str xmax ymax))))
+    (format t " ~A grid[step=~D] ~A"
+            (point-str xmin ymin)
+            step
+            (point-str xmax ymax))))
 
 (defun draw-node (x y &key name label options)
   (with-tikz-command (node :options options)
     (format t " ~@[(~A)~] at ~A {~@[~A~]}" name (point-str x y) label)))
+
+(defun draw-edge (node-1 node-2 style &key options)
+  (with-tikz-command (path :options style)
+    (format t "(~A) edge~A (~A)"
+            node-1
+            (format-options nil options :newline nil)
+            node-2)))
 
 (defun draw-long-path (xstart ystart path &key options)
   (with-tikz-command (draw :options options)
