@@ -30,32 +30,48 @@ the name of its two endpoints and its type")
 Each key is an edge type, and the values are lists of edges.")
    (expansion-factor :reader expansion-factor
                      :initarg :factor
-                     :type (cons integer integer))))
+                     :type (cons integer integer))
+   (colours :reader graph-colours
+            :initarg :colours
+            :type hash-table
+            :documentation "Hash table mapping edge types to TikZ colours")))
+
+(defun split-on-keywords (sequence keywords)
+  (loop :with subseq = nil
+        :with splitted = nil
+        :for elt :in sequence
+        :if (member elt keywords :test 'eq)
+          :do (when subseq (push (nreverse subseq) splitted))
+              (setf subseq (list elt))
+        :else
+          :do (push elt subseq)
+        :finally (push (nreverse subseq) splitted)
+                 (return (nreverse splitted))))
 
 (defmacro def-graph-substitution (&body description)
-  (assert (eq (car description) :vertices)
-          nil
-          "Malformed description: should start with :VERTICES instead of ~S"
-          (car description))
-  (let* ((edges-pos (position :edges description))
-         (subst-pos (position :substitution description)))
-    (assert edges-pos nil "Malformed description: missing :EDGES argument")
-    (assert subst-pos nil "Malformed description: missing :SUBSTITUTION argument")
-    (assert (< edges-pos subst-pos)
+  (let ((keywords '(:vertices :edges :substitution :colours)))
+    (assert (member (car description) keywords)
             nil
-            "Malformed description: :EDGES should come before :SUBSTITUTION")
-    `(make-graph-substitution
-      ',(subseq description 1 edges-pos)
-      ',(subseq description (1+ edges-pos) subst-pos)
-      ',(subseq description (1+ subst-pos)))))
+            "Malformed description: should start with a valid keyword, not ~S"
+            (car description))
+    (let ((splitted (split-on-keywords description keywords)))
+      (flet ((extract-argument (arg list)
+               (cdr (find arg list :key 'car :test 'eq))))
+        `(make-graph-substitution
+          :vertices ',(extract-argument :vertices splitted)
+          :edges ',(extract-argument :edges splitted)
+          :substitution ',(extract-argument :substitution splitted)
+          :colours ',(extract-argument :colours splitted))))))
 
-(defun make-graph-substitution (vertices edges substitution)
+(defun make-graph-substitution (&key vertices edges substitution colours)
   (let ((vertices-table (make-hash-table :test 'eq
                                          :size (length vertices)))
         (edges-table (make-hash-table :test 'equal
                                       :size (length edges)))
         (subst-table (make-hash-table :test 'eq
-                                      :size (length edges)))
+                                      :size (length substitution)))
+        (colours-table (make-hash-table :test 'eq
+                                        :size (length colours)))
         factor root)
     (loop :for (vertex x y) :in vertices
           :do (setf (gethash vertex vertices-table) (point x y))
@@ -68,16 +84,19 @@ Each key is an edge type, and the values are lists of edges.")
           :do (setf (gethash edge edges-table) t))
     (loop :for (type . subst) :in substitution
           :do (setf (gethash type subst-table) subst))
+    (loop :for (type colour) :in colours
+          :do (setf (gethash type colours-table) colour))
     (make-instance 'graph-substitution
                    :vertices vertices-table
                    :edges edges-table
                    :substitution subst-table
+                   :colours colours-table
                    :factor factor
                    :root root)))
 
 (defun factor-steps (factor steps)
-  (cons (expt (car factor) steps)
-        (expt (cdr factor) steps)))
+  (cons (expt (car factor) (1- steps))
+        (expt (cdr factor) (1- steps))))
 
 (defun scale-point (point factor)
   (with-point (x y) point
@@ -102,6 +121,15 @@ Each key is an edge type, and the values are lists of edges.")
         (vertex-pos (super-vertex-pos vertex graph steps)))
     (add-point origin vertex-pos)))
 
+(defun draw-super-edge (beg-tile beg-vertex end-tile end-vertex type graph steps)
+  (let ((beg (super-vertex-in-meta-tile-pos beg-tile beg-vertex graph steps))
+        (end (super-vertex-in-meta-tile-pos end-tile end-vertex graph steps)))
+    (draw-line (point-x beg) (point-y beg) (point-x end) (point-y end)
+               :options (let ((colour (gethash type (graph-colours graph))))
+                          (if colour
+                              (list colour '->)
+                              '->)))))
+
 (defun vertex-node-name (vertex)
   (let ((origin (point-absolute-point 0 0)))
     (format nil "~A_~D_~D"
@@ -118,14 +146,18 @@ Each key is an edge type, and the values are lists of edges.")
 
 (defun draw-graph-substitution-1 (graph)
   (with-accessors ((vertices graph-vertices)
-                   (edges graph-edges))
+                   (edges graph-edges)
+                   (substs graph-substitution)
+                   (colours graph-colours))
       graph
     (dohash (vertex coords) vertices
       (draw-vertex-1 vertex (point-x coords) (point-y coords)))
     (dohash (edge) edges
-      (draw-edge (vertex-node-name (first edge))
-                 (vertex-node-name (second edge))
-                 :->))))
+      (destructuring-bind (beg end type) edge
+        (draw-edge (vertex-node-name beg)
+                   (vertex-node-name end)
+                   :->
+                   :options (gethash type colours))))))
 
 (defgeneric draw-substitution (base steps))
 (defmethod draw-substitution :before (base steps)
@@ -144,44 +176,83 @@ Each key is an edge type, and the values are lists of edges.")
            (dohash (vertex coords) vertices
              (with-point (x y) (scale-point coords factor-steps)
                (with-shift (x y)
-                 (draw-substitution graph (1- steps))))))))))
+                 (draw-substitution graph (1- steps)))))
+           (dohash (edge) edges
+             (destructuring-bind (beg end type) edge
+               (let ((new-edges (gethash type subst)))
+                 (dolist (new-edge new-edges)
+                   (draw-super-edge beg (first new-edge)
+                                    end (second new-edge)
+                                    (third edge)
+                                    graph steps))))))))))
 
 ;;; Sierpinski:
-(defun draw-sierpinski (steps)
-  (let ((sierpinski (def-graph-substitution
-                      :vertices
-                      (a 0 0)
-                      (b 1 0)
-                      (c 1 1)
-                      :edges
-                      (a b hori)
-                      (b c vert)
-                      (a c diag)
-                      :substitution
-                      (hori (b a hori))
-                      (vert (c b vert))
-                      (diag (c a diag)))))
-    (with-preamble-to-file ("sierpinski.tex") ()
+(defun draw-substitution-in-file (graph name steps)
+  (with-preamble-to-file ((format nil "~A.tex" name)) ()
       (with-env (tikzpicture)
-        (draw-substitution sierpinski steps)))))
+        (draw-substitution graph steps))))
 
-(defun draw-square-diagonal (steps)
-  (let ((square (def-graph-substitution
-                  :vertices
-                  (a 0 0)
-                  (b 1 0)
-                  (c 1 1)
-                  (d 0 1)
-                  :edges
-                  (a b hori)
-                  (b c vert)
-                  (d c hori)
-                  (a d vert)
-                  (a c diag)
-                  :substitution
-                  (hori (c d hori))
-                  (vert (c b vert))
-                  (diag (c a diag)))))
-    (with-preamble-to-file ("square.tex") ()
-      (with-env (tikzpicture)
-        (draw-substitution square steps)))))
+;; (defparameter *sierpinski* (def-graph-substitution
+;;                              :vertices
+;;                              (a 0 0)
+;;                              (b 1 0)
+;;                              (c 1 1)
+;;                              :edges
+;;                              (a b hori)
+;;                              (b c vert)
+;;                              (a c diag)
+;;                              :substitution
+;;                              (hori (b a hori))
+;;                              (vert (c b vert))
+;;                              (diag (c a diag))
+;;                              :colours
+;;                              (hori blue)
+;;                              (vert red)
+;;                              (diag green)))
+
+;; (defparameter *square* (def-graph-substitution
+;;                          :vertices
+;;                          (a 0 0)
+;;                          (b 1 0)
+;;                          (c 1 1)
+;;                          (d 0 1)
+;;                          :edges
+;;                          (a b hori)
+;;                          (b c vert)
+;;                          (d c hori)
+;;                          (a d vert)
+;;                          (a c diag)
+;;                          :substitution
+;;                          (hori (c d hori))
+;;                          (vert (c b vert))
+;;                          (diag (c a diag))
+;;                          :colours
+;;                          (hori blue)
+;;                          (vert red)
+;;                          (diag green)))
+
+;; ;; Might be bugged ? Seems to produce too many edges
+;; (defparameter *H* (def-graph-substitution
+;;                     :vertices
+;;                     (a 0 0)
+;;                     (b 1 1)
+;;                     (c 1 -1)
+;;                     (d -1 1)
+;;                     (e -1 -1)
+;;                     :edges
+;;                     (a b diag1)
+;;                     (a c diag2)
+;;                     (e a diag1)
+;;                     (d a diag2)
+;;                     (e d vert1)
+;;                     (c b vert2)
+;;                     :substitution
+;;                     (diag1 (b e diag1))
+;;                     (diag2 (c d diag2))
+;;                     (vert1 (d e vert1))
+;;                     (vert2 (b c vert2))
+;;                     :colours
+;;                     (diag1 red)
+;;                     (diag2 blue)
+;;                     (vert1 green)
+;;                     (vert2 black)))
