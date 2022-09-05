@@ -60,40 +60,52 @@ a list"
 (defmacro with-relative-rotation (angle (&optional center-x center-y) &body body)
   `(let ((*rotation-angle* (+ *rotation-angle* ,angle))
          (*rotation-center* ,(if (or center-x center-y)
-                                 `(add-point *rotation-center*
+                                 `(point+ *rotation-center*
                                              (point ,center-x ,center-y))
                                  '*rotation-center*)))
      ,@body))
 
 (defmacro with-shift ((x y) &body body)
-  `(let ((*origin* (add-point *origin* (point ,x ,y))))
+  `(let ((*origin* (point+ *origin* (point ,x ,y))))
      ,@body))
 
 (defmacro with-reset-shift (&body body)
   `(let ((*origin* (point 0 0)))
      ,@body))
 
-(defun add-point (pt-a pt-b)
+(defun point+ (pt-a pt-b)
   (make-point :x (+ (point-x pt-a) (point-x pt-b))
               :y (+ (point-y pt-a) (point-y pt-b))))
 
-(defun sub-point (pt-a pt-b)
+(defun point- (pt-a pt-b)
   (make-point :x (- (point-x pt-a) (point-x pt-b))
               :y (- (point-y pt-a) (point-y pt-b))))
 
-(defun rotate-point (point)
+(defun point*n (pt n)
+  (make-point :x (* (point-x pt) n)
+              :y (* (point-y pt) n)))
+
+(defun point*pt (pt-a pt-b)
+  (make-point :x (* (point-x pt-a) (point-x pt-b))
+              :y (* (point-y pt-a) (point-y pt-b))))
+
+(defun point-exp (pt n)
+  (make-point :x (expt (point-x pt) n)
+              :y (expt (point-y pt) n)))
+
+(defun point-rotate (point)
   "Return the point obtained by rotating POINT by *ROTATION-ANGLE* radians
 counterclockwise around *ROTATION-CENTER*"
-  (let* ((diff (sub-point point *rotation-center*))
+  (let* ((diff (point- point *rotation-center*))
          (dx (point-x diff))
          (dy (point-y diff))
          (cos-angle (cos *rotation-angle*))
          (sin-angle (sin *rotation-angle*)))
-    (add-point *rotation-center*
-               (make-point :x (- (* cos-angle dx)
-                                 (* sin-angle dy))
-                           :y (+ (* sin-angle dx)
-                                 (* cos-angle dy))))))
+    (point+ *rotation-center*
+            (make-point :x (- (* cos-angle dx)
+                              (* sin-angle dy))
+                        :y (+ (* sin-angle dx)
+                              (* cos-angle dy))))))
 
 (defun point-to-tikz (point)
   "Return a string formatted as \"(x, y)\" if POINT is #S(POINT :X X :Y Y).
@@ -106,7 +118,7 @@ digits after the decimal point"
           (point-y point)))
 
 (defun point-absolute-point (x y)
-  (add-point *origin* (rotate-point (point x y))))
+  (point+ *origin* (point-rotate (point x y))))
 
 (defun point-str (x y)
   "Format the point #S(POINT :X X :Y Y) as a string, after

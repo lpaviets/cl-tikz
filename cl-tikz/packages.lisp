@@ -10,7 +10,11 @@
    #:point-absolute-point
    #:point-x
    #:point-y
-   #:add-point
+   #:point+
+   #:point-
+   #:point*n
+   #:point*pt
+   #:point-exp
    #:with-point
    #:point-neighbours
    #:point-all-neighbours

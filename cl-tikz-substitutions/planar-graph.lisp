@@ -256,3 +256,34 @@ Each key is an edge type, and the values are lists of edges.")
 ;;                     (diag2 blue)
 ;;                     (vert1 green)
 ;;                     (vert2 black)))
+
+;; (defparameter *weak-grid* (def-graph-substitution
+;;                             :vertices
+;;                             (a 0 0)
+;;                             (b 1 0)
+;;                             (c 2 0)
+;;                             (d 2 1)
+;;                             (e 2 2)
+;;                             (f 1 2)
+;;                             (g 0 1)
+;;                             :edges
+;;                             (a b hori)
+;;                             (b c hori)
+;;                             (c d vert)
+;;                             (d e vert)
+;;                             (f e hori)
+;;                             (g f diag)
+;;                             (a g vert)
+;;                             :substitution
+;;                             (hori (c a hori))
+;;                             (vert (e c vert))
+;;                             (diag (e a diag))
+;;                             :colours
+;;                             (hori blue)
+;;                             (vert green)
+;;                             (diag red)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Convention: a 1-substitution is the prototile graph
+;; A 0-substitution makes no sense
