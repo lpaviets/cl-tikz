@@ -359,5 +359,5 @@ BEG and END are of type POINT"
                             (diag (e a diag))
                             :colours
                             (hori blue)
-                            (vert green)
+                            (vert "LimeGreen")
                             (diag red)))

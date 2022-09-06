@@ -48,7 +48,7 @@
                         ":cycle should be the last element of the path"))
                ((:n :node)))
              (case dir
-               ((:n :node) (format t " -- (~A)" (to-lowercase-string val)))
+               ((:n :node) (format t " -- (~A)" (normalise-string val)))
                ((:c :cycle) (format t "-- cycle"))
                (t (format t " -- ~A" (point-str x y)))))))
 

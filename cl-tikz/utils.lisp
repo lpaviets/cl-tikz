@@ -48,9 +48,13 @@ the forms have been evaluated"
 (defun symb (&rest args)
   (values (intern (apply #'mkstr args))))
 
-(defun to-lowercase-string (designator)
+(defun normalise-string (designator)
+  "If DESIGNATOR is a string, return it.
+If it is a symbol, return its name in lowercase.
+Otherwise, returns (PRINC-TO-STRING DESIGNATOR)"
   (typecase designator
-    ((or string symbol) (string-downcase (string designator)))
+    (string designator)
+    (symbol (string-downcase designator))
     (t (princ-to-string designator))))
 
 (defmacro dohash ((key &optional val) table &body body)

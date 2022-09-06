@@ -12,17 +12,17 @@
 
 (defun option-to-latex (option)
   (when option
-   (if (consp option)
-       (format nil "~A=~A"
-               (to-lowercase-string (car option))
-               (to-lowercase-string (cdr option)))
-       (to-lowercase-string option))))
+    (if (consp option)
+        (format nil "~A=~A"
+                (normalise-string (car option))
+                (normalise-string (cdr option)))
+        (normalise-string option))))
 
 (defun format-options (destination options &key (newline t) mandatory)
   (let ((res (if (and options ;; don't format NIL
                       (or (symbolp options)
                           (stringp options))) ;; Be liberal in what we accept
-                 (list (to-lowercase-string options))
+                 (list (normalise-string options))
                  (mapcar 'option-to-latex options)))
         (op (if mandatory "{" "["))
         (cl (if mandatory "}" "]")))
