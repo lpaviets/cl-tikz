@@ -62,10 +62,13 @@ Each key is an edge type, and the values are lists of edges.")
       (loop :for (vertex x y) :in vertices
             :do (setf (gethash vertex vertices-table) (point x y))
             :maximize x :into max-x
+            :minimize x :into min-x
             :maximize y :into max-y
+            :minimize y :into min-y
             :when (= 0 x y)
               :do (setf root vertex)
-            :finally (setf factor (point (1+ max-x) (1+ max-y))))
+            :finally (setf factor (point (1+ (- max-x min-x))
+                                         (1+ (- max-y min-y)))))
       (loop :for edge :in edges
             :do (setf (gethash edge edges-table) t))
       (loop :for (type . subst) :in substitution
@@ -127,10 +130,16 @@ Each key is an edge type, and the values are lists of edges.")
 (defun n-expansion-factor (graph n)
   (point-exp (expansion-factor graph) (1- n)))
 
+(defun vertex-pos-in-graph (name graph)
+  (gethash name (graph-vertices graph)))
+
 (defun vertex-pos-in-substitution (origin name graph)
   (point+ (point*pt origin
                     (expansion-factor graph))
-          (gethash name (graph-vertices graph))))
+          (vertex-pos-in-graph name graph)))
+
+(defun substitute-edge-list-edges (edge graph)
+  (gethash (edge-type edge) (graph-substitution graph)))
 
 (defun substitute-vertex (vertex graph)
   (with-accessors ((vertices graph-vertices)
@@ -163,7 +172,7 @@ BEG and END are of type POINT"
                        (end edge-end)
                        (type edge-type))
           edge
-        (let ((substituted-edges (gethash type subst)))
+        (let ((substituted-edges (substitute-edge-list-edges edge graph)))
           (dolist (subst-edge substituted-edges)
             (destructuring-bind (subst-beg-name subst-end-name subst-type) subst-edge
               (let ((new-beg (vertex subst-beg-name
@@ -187,8 +196,8 @@ BEG and END are of type POINT"
         (push (vertex v pos) 1-vertices))
       (dohash (edge) edges
         (destructuring-bind (beg end type) edge
-          (push (edge (vertex beg (gethash beg vertices))
-                      (vertex end (gethash end vertices))
+          (push (edge (vertex beg (vertex-pos-in-graph beg graph))
+                      (vertex end (vertex-pos-in-graph end graph))
                       type)
                 1-edges)))
       (values 1-vertices 1-edges))))
@@ -231,6 +240,9 @@ BEG and END are of type POINT"
                                       :circle t
                                       :|inner sep| "2pt"))))
 
+(defun edge-colour (edge graph)
+  (gethash (edge-type edge) (graph-colours graph)))
+
 (defun draw-graph-edge (edge graph)
   (with-accessors ((beg edge-start)
                    (end edge-end)
@@ -239,7 +251,7 @@ BEG and END are of type POINT"
     (draw-edge (vertex-node-name beg)
                (vertex-node-name end)
                :->
-               :options (gethash type (graph-colours graph)))))
+               :options (edge-colour edge graph))))
 
 (defgeneric draw-substitution (base n))
 (defmethod draw-substitution :before (base n)
@@ -299,7 +311,6 @@ BEG and END are of type POINT"
                          (vert red)
                          (diag green)))
 
-;; Might be bugged ? Seems to produce too many edges
 (defparameter *H* (def-graph-substitution
                     :vertices
                     (a 0 0)
@@ -343,8 +354,8 @@ BEG and END are of type POINT"
                             (g f diag)
                             (a g vert)
                             :substitution
-                            (hori (c a hori))
-                            (vert (e c vert))
+                            (hori (c a hori) (d g hori))
+                            (vert (e c vert) (f b vert))
                             (diag (e a diag))
                             :colours
                             (hori blue)
