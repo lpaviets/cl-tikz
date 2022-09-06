@@ -61,10 +61,10 @@ the forms have been evaluated"
                   ,@body)
                 ,table))))
 
-(defun list-to-set (list)
+(defun list-to-set (list &optional (default-value t))
   (let ((table (make-hash-table)))
     (dolist (x list)
-      (setf (gethash x table) t))
+      (setf (gethash x table) default-value))
     table))
 
 (defun set-to-list (set)
