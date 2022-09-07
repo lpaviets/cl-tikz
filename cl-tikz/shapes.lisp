@@ -31,7 +31,7 @@
             (format-options nil options :newline nil)
             node-2)))
 
-(defun draw-long-path (xstart ystart path &key options)
+(defun draw-long-relative-path (xstart ystart path &key options)
   (with-tikz-command (draw :options options)
     (loop :initially (format t " ~A" (point-str xstart ystart))
           :with x = xstart
@@ -51,6 +51,16 @@
                ((:n :node) (format t " -- (~A)" (normalise-string val)))
                ((:c :cycle) (format t "-- cycle"))
                (t (format t " -- ~A" (point-str x y)))))))
+
+(defun draw-long-path (points &key cycle options)
+  (with-tikz-command (draw :options options)
+    (format t "~{~A~^ -- ~}~:[~; -- cycle~]"
+            (mapcar (lambda (pt)
+                      (let ((point (point-ensure pt)))
+                        (with-point (x y) point
+                          (point-str x y))))
+                    points)
+            cycle)))
 
 (defmacro with-random-crop ((xmin ymin xmax ymax &key (step 2)) &body body)
   `(with-env (scope)

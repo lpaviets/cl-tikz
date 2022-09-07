@@ -37,18 +37,6 @@ Each key is an edge type, and the values are lists of edges.")
             :documentation "Hash table mapping edge types to TikZ colours")))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (defun split-on-keywords (sequence keywords)
-    (loop :with subseq = nil
-          :with splitted = nil
-          :for elt :in sequence
-          :if (member elt keywords :test 'eq)
-            :do (when subseq (push (nreverse subseq) splitted))
-                (setf subseq (list elt))
-          :else
-            :do (push elt subseq)
-          :finally (push (nreverse subseq) splitted)
-                   (return (nreverse splitted))))
-
   (defun make-graph-substitution (&key vertices edges substitution colours)
     (let ((vertices-table (make-hash-table :test 'eq
                                            :size (length vertices)))
@@ -126,9 +114,6 @@ Each key is an edge type, and the values are lists of edges.")
 
 ;; Convention: a 1-substitution is the prototile graph
 ;; A 0-substitution makes no sense
-
-(defun n-expansion-factor (graph n)
-  (point-exp (expansion-factor graph) (1- n)))
 
 (defun vertex-pos-in-graph (name graph)
   (gethash name (graph-vertices graph)))
@@ -253,111 +238,9 @@ BEG and END are of type POINT"
                :->
                :options (edge-colour edge graph))))
 
-(defgeneric draw-substitution (base n))
-(defmethod draw-substitution :before (base n)
-  (when (< n 1)
-    (error "Number ~S of steps cannot be negative" n)))
-
 (defmethod draw-substitution ((graph graph-substitution) n)
   (multiple-value-bind (vertices edges) (n-substitute-graph graph n)
     (dolist (v vertices)
       (draw-vertex-1 v))
     (dolist (e edges)
       (draw-graph-edge e graph))))
-
-(defun draw-substitution-in-file (graph name steps)
-  (with-preamble-to-file ((format nil "~A.tex" name)) ()
-    (with-env (tikzpicture)
-      (draw-substitution graph steps))))
-
-
-;;;; Examples
-(defparameter *sierpinski* (def-graph-substitution
-                             :vertices
-                             (a 0 0)
-                             (b 1 0)
-                             (c 1 1)
-                             :edges
-                             (a b hori)
-                             (b c vert)
-                             (a c diag)
-                             :substitution
-                             (hori (b a hori))
-                             (vert (c b vert))
-                             (diag (c a diag))
-                             :colours
-                             (hori blue)
-                             (vert red)
-                             (diag green)))
-
-(defparameter *square* (def-graph-substitution
-                         :vertices
-                         (a 0 0)
-                         (b 1 0)
-                         (c 1 1)
-                         (d 0 1)
-                         :edges
-                         (a b hori)
-                         (b c vert)
-                         (d c hori)
-                         (a d vert)
-                         (a c diag)
-                         :substitution
-                         (hori (c d hori))
-                         (vert (c b vert))
-                         (diag (c a diag))
-                         :colours
-                         (hori blue)
-                         (vert red)
-                         (diag green)))
-
-(defparameter *H* (def-graph-substitution
-                    :vertices
-                    (a 0 0)
-                    (b 1 1)
-                    (c 1 -1)
-                    (d -1 1)
-                    (e -1 -1)
-                    :edges
-                    (a b diag1)
-                    (a c diag2)
-                    (e a diag1)
-                    (d a diag2)
-                    (e d vert1)
-                    (c b vert2)
-                    :substitution
-                    (diag1 (b e diag1))
-                    (diag2 (c d diag2))
-                    (vert1 (d e vert1))
-                    (vert2 (b c vert2))
-                    :colours
-                    (diag1 red)
-                    (diag2 blue)
-                    (vert1 green)
-                    (vert2 black)))
-
-(defparameter *weak-grid* (def-graph-substitution
-                            :vertices
-                            (a 0 0)
-                            (b 1 0)
-                            (c 2 0)
-                            (d 2 1)
-                            (e 2 2)
-                            (f 1 2)
-                            (g 0 1)
-                            :edges
-                            (a b hori)
-                            (b c hori)
-                            (c d vert)
-                            (d e vert)
-                            (f e hori)
-                            (g f diag)
-                            (a g vert)
-                            :substitution
-                            (hori (c a hori) (d g hori))
-                            (vert (e c vert) (f b vert))
-                            (diag (e a diag))
-                            :colours
-                            (hori blue)
-                            (vert "LimeGreen")
-                            (diag red)))

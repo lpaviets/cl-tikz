@@ -14,6 +14,22 @@
        ,point
      ,@body))
 
+(defun point-ensure (&rest args)
+  "A DWIM convert-to-point function.
+If ARGS is ...
+- A POINT P -> return P.
+- A cons cell (X . Y) -> return (POINT X Y)
+- A list (X Y) -> return (POINT X Y)
+- Two arguments, X and Y -> return (POINT X Y)"
+  (if (= (length args) 1)
+      (let ((point (car args)))
+       (etypecase point
+         (point point)
+         (cons (if (listp (cdr point))
+                   (point (car point) (cadr point))
+                   (point (car point) (cdr point))))))
+      (point (first args) (second args))))
+
 (defun point-neighbours (point)
   "Return the four adjacent points to POINT, in order left, down, right
 and up when compared to it, as a list"
