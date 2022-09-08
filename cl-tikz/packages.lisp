@@ -21,10 +21,8 @@
    #:point-all-neighbours
    ;; Macros
    #:with-rotation
-   #:with-reset-rotation
-   #:with-relative-rotation
    #:with-shift
-   #:with-reset-shift
+   #:with-reset-transformation
    ;; Drawing
    #:point-str))
 

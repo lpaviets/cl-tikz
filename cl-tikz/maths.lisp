@@ -55,38 +55,26 @@ a list"
           (up-left (point (1- x) (1+ y))))
       (list left down-left down down-right right up-right up up-left))))
 
-(defvar *rotation-angle* 0d0)
-(defvar *rotation-center* (point 0 0))
 (defvar *float-approx-digits* 2)
-(defvar *origin* (point 0 0))
+
+(defvar *transformations* nil "List of geometric transformations to apply to each point.
+Each element is either (:SHIFT POINT) or (:ROTATE ANGLE CENTER)
+where POINT and CENTER are points, ANGLE an angle in radian.")
 
 (defmacro with-rotation (angle (&optional center-x center-y) &body body)
   (let ((new-center (if (or center-x center-y)
                         `(point ,center-x ,center-y)
-                        '*rotation-center*)))
-    `(let ((*rotation-angle* ,angle)
-           (*rotation-center* ,new-center))
+                        '(point 0 0))))
+    `(let ((*transformations* (cons (list :rotate ,angle ,new-center)
+                                    *transformations*)))
        ,@body)))
 
-(defmacro with-reset-rotation (&body body)
-  `(let ((*rotation-angle* 0)
-         (*rotation-center* (point 0 0)))
-     ,@body))
-
-(defmacro with-relative-rotation (angle (&optional center-x center-y) &body body)
-  `(let ((*rotation-angle* (+ *rotation-angle* ,angle))
-         (*rotation-center* ,(if (or center-x center-y)
-                                 `(point+ *rotation-center*
-                                             (point ,center-x ,center-y))
-                                 '*rotation-center*)))
+(defmacro with-reset-transformations (&body body)
+  `(let ((*transformations* nil))
      ,@body))
 
 (defmacro with-shift ((x y) &body body)
-  `(let ((*origin* (point+ *origin* (point ,x ,y))))
-     ,@body))
-
-(defmacro with-reset-shift (&body body)
-  `(let ((*origin* (point 0 0)))
+  `(let ((*transformations* (cons (list :shift (point ,x ,y)) *transformations*)))
      ,@body))
 
 (defun point+ (pt-a pt-b)
@@ -109,19 +97,31 @@ a list"
   (make-point :x (expt (point-x pt) n)
               :y (expt (point-y pt) n)))
 
-(defun point-rotate (point)
+(defun point-rotate (point angle &optional (center (point 0 0)))
   "Return the point obtained by rotating POINT by *ROTATION-ANGLE* radians
 counterclockwise around *ROTATION-CENTER*"
-  (let* ((diff (point- point *rotation-center*))
+  (let* ((diff (point- point center))
          (dx (point-x diff))
          (dy (point-y diff))
-         (cos-angle (cos *rotation-angle*))
-         (sin-angle (sin *rotation-angle*)))
-    (point+ *rotation-center*
+         (cos-angle (cos angle))
+         (sin-angle (sin angle)))
+    (point+ center
             (make-point :x (- (* cos-angle dx)
                               (* sin-angle dy))
                         :y (+ (* sin-angle dx)
                               (* cos-angle dy))))))
+
+(defun apply-transformations (point)
+  (loop :with new-point = point
+        :for transfo :in *transformations*
+        :for transfo-type = (car transfo)
+        :do (ecase transfo-type
+              (:rotate (setf new-point (point-rotate new-point
+                                                     (second transfo)
+                                                     (third transfo))))
+              (:shift (setf new-point (point+ new-point (second transfo)))))
+        :finally (return new-point)))
+
 
 (defun point-to-tikz (point)
   "Return a string formatted as \"(x, y)\" if POINT is #S(POINT :X X :Y Y).
@@ -134,7 +134,7 @@ digits after the decimal point"
           (point-y point)))
 
 (defun point-absolute-point (x y)
-  (point+ *origin* (point-rotate (point x y))))
+  (apply-transformations (point x y)))
 
 (defun point-str (x y)
   "Format the point #S(POINT :X X :Y Y) as a string, after
