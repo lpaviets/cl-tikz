@@ -54,27 +54,18 @@ in it.")))
                         :cycle t
                         :options options)))))
 
-(defun substitute-polygon (polygon shape-substitution)
-  (with-accessors ((factor expansion-factor)
-                   (subdivision shape-subdivison))
-      shape-substitution
-    (with-accessors ((vertices polygon-vertices)
-                     (origin polygon-origin)
-                     (rotation polygon-rotation))
-        polygon
-      (let ((scaled-origin (point*pt origin factor)))
-        (mapcar (lambda (sub-poly)
-                  (make-polygon (polygon-vertices sub-poly)
-                                (point+ scaled-origin (polygon-origin sub-poly))
-                                (+ rotation (polygon-rotation sub-poly))))
-                subdivision)))))
-
-(defun n-substitute-polygon (polygon shape-substitution n)
-  (if (= n 1)
-      (list polygon)
-      (loop :for sub-poly :in (n-substitute-polygon polygon shape-substitution (1- n))
-            :nconc (substitute-polygon sub-poly shape-substitution))))
-
 (defmethod draw-substitution ((shape shape-substitution) n)
-  (let ((polygons (n-substitute-polygon (shape-initial shape) shape n)))
-    (map nil 'draw-polygon polygons)))
+  (if (= n 1)
+      (draw-polygon (shape-initial shape))
+      (with-accessors ((factor expansion-factor)
+                       (subdivision shape-subdivison))
+          shape
+        (let ((scaled-factor (point-exp factor (- n 2))))
+          (dolist (sub-poly subdivision)
+            (with-accessors ((rotation polygon-rotation)
+                             (origin polygon-origin))
+                sub-poly
+              (with-point (ox oy) (point*pt origin scaled-factor)
+                (with-shift (ox oy)
+                  (with-rotation rotation ()
+                    (draw-substitution shape (1- n)))))))))))
