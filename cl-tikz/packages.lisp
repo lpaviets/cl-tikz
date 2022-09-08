@@ -7,6 +7,7 @@
    #:*float-approx-digits*
    ;; Point
    #:point
+   #:point-ensure
    #:point-absolute-point
    #:point-x
    #:point-y

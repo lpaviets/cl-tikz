@@ -8,4 +8,7 @@
   :serial t
   :depends-on (:cl-tikz)
   :components ((:file "packages")
-               (:file "planar-graph")))
+               (:file "utils")
+               (:file "planar-graph")
+               (:file "geometric")
+               (:file "examples")))
