@@ -11,6 +11,10 @@
 ;;; can be divided into four identical squares).
 ;;; The substitution is then defined as repeated inflation and division of an
 ;;; initial shape.
+;;; CAVEAT: At the moment, substitutions can only involve a single shape
+;;; (so e.g. Penrose, obtained by combining triangles & rhombuses, cannot be
+;;; defined), and this shape cannot be mirrored (so e.g. the Sphinx, divided
+;;; in 4 smaller sphinxes, cannot be defined as one of them is mirrored)
 
 (defclass polygon ()
   ((vertices :reader polygon-vertices
@@ -22,12 +26,6 @@
    (rotation :reader polygon-rotation
              :initarg :rotation
              :type double-float)))
-
-(defun make-polygon (vertices origin rotation)
-  (make-instance 'polygon
-                 :vertices vertices
-                 :origin origin
-                 :rotation rotation))
 
 (defclass shape-substitution ()
   ((initial :reader shape-initial
@@ -43,6 +41,45 @@
 The meaning is that when this shape S is expanded by its
 EXPANSION-FACTOR, then each at position ORIGIN, we cut a shape POLYGON
 in it.")))
+
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defun make-polygon (vertices origin rotation)
+    (make-instance 'polygon
+                   :vertices vertices
+                   :origin origin
+                   :rotation rotation))
+
+  (defun make-geometric-subdivision (&key initial factor subdivision)
+    (let ((initial-points (mapcar 'point-ensure initial)))
+      (make-instance 'shape-substitution
+                     :initial (make-polygon initial-points (point 0 0) 0)
+                     :factor (point-ensure factor)
+                     :subdivision (mapcar (lambda (args)
+                                            (make-polygon initial-points
+                                                          (point-ensure (first args))
+                                                          (second args)))
+                                          subdivision)))))
+
+(defmacro def-geometric-subdivision (&body description)
+  (let ((keywords '(:initial :factor :subdivision)))
+    (assert (member (car description) keywords)
+            nil
+            "Malformed description: should start with a valid keyword, not ~S"
+            (car description))
+    (let ((splitted (split-on-keywords description keywords)))
+      (flet ((extract-argument (arg list)
+               (cdr (find arg list :key 'car :test 'eq))))
+        `(make-geometric-subdivision
+          ,@(loop :for kw :in keywords
+                  :if (eq kw :subdivision)
+                    :collect kw
+                    :and :collect `(list
+                                    ,@(loop :for (pt angle)
+                                              :in (extract-argument kw splitted)
+                                            :collect `(list ',pt ,angle)))
+                  :else
+                    :collect kw
+                    :and :collect (list 'quote (extract-argument kw splitted))))))))
 
 (defun draw-polygon (polygon &key options)
   (let ((origin (polygon-origin polygon)))

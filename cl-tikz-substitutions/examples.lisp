@@ -93,19 +93,18 @@
 
 ;;;; Geometric
 (defparameter *chair*
-  (flet ((chair-polygon-at (origin rotation)
-           (make-polygon (list (point 0 0)
-                               (point 2 0)
-                               (point 2 1)
-                               (point 1 1)
-                               (point 1 2)
-                               (point 0 2))
-                         origin
-                         rotation)))
-    (make-instance 'shape-substitution
-                   :initial (chair-polygon-at (point 0 0) 0)
-                   :factor (point 2 2)
-                   :subdivision (list (chair-polygon-at (point 0 0) 0)
-                                      (chair-polygon-at (point 1 1) 0)
-                                      (chair-polygon-at (point 0 4) (- (/ pi 2)))
-                                      (chair-polygon-at (point 4 0) (/ pi 2))))))
+  (def-geometric-subdivision
+    :initial
+    (0 0)
+    (2 0)
+    (2 1)
+    (1 1)
+    (1 2)
+    (0 2)
+    :factor
+    2 2
+    :subdivision
+    ((0 0) 0)
+    ((1 1) 0)
+    ((0 4) (- (/ pi 2)))
+    ((4 0) (/ pi 2))))
