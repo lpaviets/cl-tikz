@@ -71,7 +71,15 @@ some extra parameters ARG1 ... ARGN.")
                     nil
                     "No geometric transformation is associated to ~A" transfo-type)
         :do (setf new-point (apply transfo-function new-point transfo-args))
-        :finally (return new-point)))
+        :finally (return new-point))
+  ;; ;; Could probably be rewritten as
+  ;; (reduce (lambda (point transfo)
+  ;;           (apply (get-transformation-function (car transfo))
+  ;;                  point
+  ;;                  (cdr transfo)))
+  ;;         *transformations*
+  ;;         :initial-value point)
+  )
 
 (defun point-absolute-point (x y)
   (apply-transformations (point x y)))
