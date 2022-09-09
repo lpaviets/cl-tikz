@@ -22,6 +22,7 @@
    ;; Macros
    #:with-rotation
    #:with-shift
+   #:with-mirror
    #:with-reset-transformation
    ;; Drawing
    #:point-str))

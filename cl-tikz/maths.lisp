@@ -57,26 +57,6 @@ a list"
 
 (defvar *float-approx-digits* 2)
 
-(defvar *transformations* nil "List of geometric transformations to apply to each point.
-Each element is either (:SHIFT POINT) or (:ROTATE ANGLE CENTER)
-where POINT and CENTER are points, ANGLE an angle in radian.")
-
-(defmacro with-rotation (angle (&optional center-x center-y) &body body)
-  (let ((new-center (if (or center-x center-y)
-                        `(point ,center-x ,center-y)
-                        '(point 0 0))))
-    `(let ((*transformations* (cons (list :rotate ,angle ,new-center)
-                                    *transformations*)))
-       ,@body)))
-
-(defmacro with-reset-transformations (&body body)
-  `(let ((*transformations* nil))
-     ,@body))
-
-(defmacro with-shift ((x y) &body body)
-  `(let ((*transformations* (cons (list :shift (point ,x ,y)) *transformations*)))
-     ,@body))
-
 (defun point+ (pt-a pt-b)
   (make-point :x (+ (point-x pt-a) (point-x pt-b))
               :y (+ (point-y pt-a) (point-y pt-b))))
@@ -111,15 +91,90 @@ counterclockwise around *ROTATION-CENTER*"
                         :y (+ (* sin-angle dx)
                               (* cos-angle dy))))))
 
+(defun line-equation-from (pt-a pt-b)
+  "Return a list (A B C) such that the line given by the equation
+AX+BY+C=0 passes through PT-A and PT-B"
+  (with-point (xa ya) pt-a
+    (with-point (xb yb) pt-b
+      (let ((dx (- xb xa))
+            (dy (- yb ya)))
+        (if (zerop dx)
+            (list 1 0 (- xa))
+            (let* ((a (/ dy dx))
+                   (c (- ya (* a xa))))
+              (list a -1 c)))))))
+
+;;;; Geometric transformations
+;;;; Transformations are used via WITH-* macros. Each of those macros will
+;;;; add a new transformation to be applied to all the points before *drawing*
+;;;; them (user facing interface; in fact, the transformations are applied in
+;;;; the POINT-ABSOLUTE-POINT function)
+;;;; Nested transformations are applied sequentially. This means that you do not
+;;;; need to be aware of the surrounding context to draw, and you can always assume
+;;;; that the origin is the point (0, 0) and draw as usual.
+
+(defvar *transformations* nil
+  "List of geometric transformations to apply to each point.
+Each element is a list (TRANSFO . ARGS) where transfo is a valid key for
+*TRANSFORMATION-FUNCTIONS*, and ARGS are argument to the associated function.")
+
+(defvar *transformation-functions*
+  '(:rotate point-rotate
+    :shift point+
+    :mirror point-mirror)
+  "PLIST of geometric transformations.
+Each WITH-<TRANSFO> macro is supposed to be associated with a keyword,
+the key in this PLIST, and a function TRANSFO, the associated value.
+TRANSFO is a function whose lambda-list has the form
+(POINT ARG1 ... ARGN)
+It should return the value of POINT after being transformed by TRANSFO with
+some extra parameters ARG1 ... ARGN.")
+
+(defmacro with-transformation ((keyword &rest args) &body body)
+  `(let ((*transformations* (cons (list ,keyword ,@args) *transformations*)))
+     ,@body))
+
+(defmacro with-rotation (angle (&optional center-x center-y) &body body)
+  (let ((new-center (if (or center-x center-y)
+                        `(point ,center-x ,center-y)
+                        '(point 0 0))))
+    `(with-transformation (:rotate ,angle ,new-center)
+       ,@body)))
+
+(defmacro with-reset-transformations (&body body)
+  `(let ((*transformations* nil))
+     ,@body))
+
+(defmacro with-shift ((x y) &body body)
+  `(with-transformation (:shift (point ,x ,y))
+     ,@body))
+
+(defun point-mirror (point pt-a pt-b)
+  "Mirror of point POINT relative to the line that passes by PT-A and PT-B"
+  (destructuring-bind (a b c) (line-equation-from pt-a pt-b)
+    (with-point (x y) point
+      (let ((coeff (* -2 (/ (+ (* a x)
+                               (* b y)
+                               c)
+                            (+ (* a a)
+                               (* b b))))))
+        (point (+ x (* a coeff)) (+ y (* b coeff)))))))
+
+(defmacro with-mirror ((pt-a pt-b) &body body)
+  `(with-transformation (:mirror ,pt-a ,pt-b)
+     ,@body))
+
+(defun get-transformation-function (transfo)
+  (getf *transformation-functions* transfo))
+
 (defun apply-transformations (point)
   (loop :with new-point = point
-        :for transfo :in *transformations*
-        :for transfo-type = (car transfo)
-        :do (ecase transfo-type
-              (:rotate (setf new-point (point-rotate new-point
-                                                     (second transfo)
-                                                     (third transfo))))
-              (:shift (setf new-point (point+ new-point (second transfo)))))
+        :for (transfo-type . transfo-args) :in *transformations*
+        :for transfo-function = (get-transformation-function transfo-type)
+        :do (assert transfo-function
+                    nil
+                    "No geometric transformation is associated to ~A" transfo-type)
+        :do (setf new-point (apply transfo-function new-point transfo-args))
         :finally (return new-point)))
 
 
