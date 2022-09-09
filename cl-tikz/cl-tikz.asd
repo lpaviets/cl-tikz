@@ -8,7 +8,8 @@
   :serial t
   :components ((:file "packages")
                (:file "utils")
-               (:file "maths")
+               (:file "point")
+               (:file "transformations")
                (:file "options")
                (:file "helpers")
                (:file "arrows")
