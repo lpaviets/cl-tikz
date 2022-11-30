@@ -40,6 +40,26 @@
                          (vert red)
                          (diag green)))
 
+(defparameter *square-no-diag* (def-graph-substitution
+                                 :vertices
+                                 (a 0 0)
+                                 (b 1 0)
+                                 (c 1 1)
+                                 (d 0 1)
+                                 :edges
+                                 (a b hori)
+                                 (b c vert)
+                                 (d c hori)
+                                 (a d vert)
+                                 :substitution
+                                 (hori (c d hori)
+                                       (b a hori)) ; could be removed
+                                 (vert (c b vert)
+                                       (d a vert)) ; could be removed
+                                 :colours
+                                 (hori blue)
+                                 (vert red)))
+
 (defparameter *H* (def-graph-substitution
                     :vertices
                     (a 0 0)
@@ -64,6 +84,30 @@
                     (diag2 blue)
                     (vert1 green)
                     (vert2 black)))
+
+(defparameter *H-bartholdi*
+  (def-graph-substitution
+    :vertices
+    (a 0 0)
+    (b 0 -1)
+    (c 1 -1)
+    (d 1 0)
+    (e 1 1)
+    (f 0 1)
+    :edges
+    (a f up)
+    (b a up)
+    (d e up)
+    (c d up)
+    (f e right)
+    (a d right)
+    (b c right)
+    :substitution
+    (up (f b up))
+    (right (d a right))
+    :colours
+    (up blue)
+    (right red)))
 
 (defparameter *weak-grid* (def-graph-substitution
                             :vertices

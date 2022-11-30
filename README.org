@@ -1,7 +1,7 @@
 * Intro
 
 This project tries to make it easier to produce images that can be embedded in LaTeX documents. In particular, this projects acts as a Lisp wrapper around TikZ.
-As TikZ's syntax is sometimes obtuse, and as computations done directly with the TeX engine are either hard to do (due to TikZ's syntax, LaTeX limitations ...), or really, we try to do most of the work in a more powerful programming language, and we directly generate "low-level" TikZ. As such, the TikZ code that is output does not contain computationally-intensive macros, and we try to do as much maths as possible (rotations, loops ...) in Common Lisp beforehand.
+As TikZ's syntax is sometimes obtuse, and as computations done directly with the TeX engine are either hard to do (due to TikZ's syntax, LaTeX limitations ...), or really slow, we try to do most of the work in a more powerful programming language, and we directly generate "low-level" TikZ. As such, the TikZ code that is output does not contain computationally-intensive macros, and we try to do as much maths as possible (rotations, loops ...) in Common Lisp beforehand.
 
 As most of personal research work involves tilings, Wang tiles, subshifts and several other combinatoric objects such as cellular automata or substitutions, a major part of the project is directed towards this objective, /e.g./ making it easy to define Wang tiles and how to draw them. This also involves writing algorithms that are not directly related to the task of producing TikZ code. I try to separate the "drawing" and the "computing" part whenever this makes sense, but it is not always possible.
 
@@ -11,9 +11,10 @@ As most of personal research work involves tilings, Wang tiles, subshifts and se
 
 This library provides several functions, macros and utilities that should facilitate the production of TikZ code. They mainly work by using the ~format~ function, outputing to ~*standard-output*~ - writing in files is then achieved by capturing this stream and redirecting it to the desired file. Below are listed some of the main goals and design principles followed in the library:
 
-- The TikZ code that is produced has to be readable. This means that I try to add line breaks, spaces, give explicit node names ... whenever it is possible.
+- The TikZ code that is produced has to be readable. This means that I try to add line breaks, spaces, give explicit node names ... when possible.
 - Do as much work as possible in Common Lisp. For example, "unroll" loops (do the loop directly in Lisp, and output TikZ code that do not contain any loop), place nodes and points directly (rather than using positional arguments such as TikZ's ~below left=of A~, etc)
--  ... but don't reinvent the wheel. For example, computing the edges endpoints between drawn nodes would be expensive, and require heavy computations (is the node drawn as a circle ? As a rectangle ? Are there arguments specified for the style of the edge ? What is the ~inner sep~ of the node ?), so we let TikZ do it.
+- ... but don't reinvent the wheel. For example, computing the edges endpoints between drawn nodes would be expensive, and require heavy computations (is the node drawn as a circle ? As a rectangle ? Are there arguments specified for the style of the edge ? What is the ~inner sep~ of the node ?), so we let TikZ do it.
+- All of those reasons also explain why we produce TikZ code, as opposed to even lower-level graphic languages, such as PGF (on top of which TikZ is built) or even SVG.
 
 * Examples
 ** Robinson tiling
