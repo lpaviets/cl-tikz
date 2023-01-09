@@ -31,12 +31,10 @@
   (:use #:cl #:org.numbra.cl-tikz/math)
   (:export
    ;; Draw paths
-   #:draw-line
-   #:draw-rectangle
+   #:defshape
    #:draw-square
    #:draw-node
    #:draw-edge
-   #:draw-grid
    #:draw-long-path
    #:with-random-crop
    ;; Other drawing utilities
@@ -48,7 +46,7 @@
    #:with-env
    #:with-tikz-command
    #:with-preamble-to-file
-   ;; Generi utilities
+   ;; Generic utilities
    #:xor
    #:symb
    #:capture-stdout

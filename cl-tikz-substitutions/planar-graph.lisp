@@ -221,8 +221,7 @@ BEG and END are of type POINT"
       vertex
     (draw-node (point-x pos) (point-y pos)
                :name (vertex-node-name vertex) ;; to correct
-               :options (make-options :draw t
-                                      :circle t
+               :options (make-options :circle t
                                       :|inner sep| "2pt"))))
 
 (defun edge-colour (edge graph)
