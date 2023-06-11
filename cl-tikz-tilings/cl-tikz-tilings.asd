@@ -10,6 +10,7 @@
   :components ((:file "packages")
                (:file "wang-tiles")
                (:file "tileset")
+               ;; (:file "topology")
                (:file "tiling")
                (:file "hom-shift")
                (:file "draw-tiles")

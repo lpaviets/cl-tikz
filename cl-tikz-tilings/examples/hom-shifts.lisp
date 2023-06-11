@@ -5,3 +5,12 @@
     (:blue :red)
     (:blue :green)
     (:green :red)))
+
+(defvar *house*
+  (defhomshift house
+    (:blue :red)
+    (:blue :green)
+    (:green :red)
+    (:red :purple)
+    (:purple :yellow)
+    (:yellow :green)))
