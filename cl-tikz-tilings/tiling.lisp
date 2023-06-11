@@ -11,20 +11,24 @@
             :type array)
    (bounds :initarg :bounds
            :reader bounds
-           :type function)
+           :type function
+           :documentation "Function of one argument, a POINT. Should return T if POINT is in the
+bounds of SURFACE, NIL otherwise. This function along with the
+GET-TILE-FUN slot are used to changed the actual topology of the
+tiling.")
    (get-tile-fun :initarg :tile-fun
                  :reader get-tile-fun
                  :type function
                  :documentation "Function of two arguments, a TILING and a POINT. Can assume that
-POINT is in the bounds of TILING, and should return the tile located at
-position POINT in TILING, or NIL if no such tile exists.")
+POINT is in the bounds of TILING, and should return the tile located
+at position POINT in TILING, or NIL if no such tile exists.")
    (find-valid-tiles-fun :initarg :find-valid-tiles
                          :reader find-valid-tiles-fun
                          :type (or function symbol)
                          :documentation "Function of two arguments, a POINT and a TILING. Can
 assume that POINT is in the bounds of TILING, and should return a list
-of all the valid tiles that can - locally - be placed at POINT.
-The list need not be a fresh list."))
+of all the valid tiles that can - locally - be placed at POINT. The
+list need not be a fresh list."))
   (:default-initargs
    :tileset (error "A tileset is required to define a tiling")
    :surface (error "A surface is required to define a tiling")
@@ -47,6 +51,22 @@ tiles an WIDTHxHEIGHT rectangular grid"
              :surface grid
              :bounds #'grid-bounds
              :tile-fun #'grid-tile-fun
+             args))))
+
+(defun make-tiling-torus (tileset width height &rest args)
+  "Return a new empty tiling, using TILESET as its tileset, and which
+tiles an WIDTHxHEIGHT torus."
+  (let ((torus (make-array (list height width) :initial-element nil)))
+    (flet ((torus-tile-fun (tiling pos)
+             (aref (surface tiling)
+                   (mod (point-y pos) height)
+                   (mod (point-x pos) width))))
+      (apply #'make-instance
+             'tiling
+             :tileset tileset
+             :surface torus
+             :bounds (constantly t)
+             :tile-fun #'torus-tile-fun
              args))))
 
 (defun copy-tiling (tiling)

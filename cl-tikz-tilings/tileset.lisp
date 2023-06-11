@@ -40,3 +40,22 @@
            (valid-neighbour-p tile right :right))
        (or (not up)
            (valid-neighbour-p tile up :up))))
+
+;; TODO: Add a way to define a product tileset for two SFTs
+;; May be only for Wang tiles for now ?
+;; With current architecture, tiles have a class, might need to give the product one a class inheriting from both ...
+
+(defun make-product-tileset (name keep-tile-fun &rest tilesets)
+  (labels ((cartesian-product (lists)
+             (cond
+               ((endp lists) nil)
+               ((endp (cdr lists)) (car lists))
+               (t
+                (let ((prev (cartesian-product (cdr lists)))
+                      new-acc)
+                  (dolist (x (car lists))
+                    (dolist (y prev)
+                      (push (cons x y) new-acc)))
+                  new-acc)))))
+    (let ((all-tiles (cartesian-product (mapcar #'tileset-tiles tilesets))))
+      (make-tileset name (remove-if-not keep-tile-fun all-tiles)))))

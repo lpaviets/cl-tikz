@@ -10,8 +10,14 @@
 ;;; - keyword arguments are handled in a shaky way
 ;;; - it generates a bunch of functions for no real reason, we could imagine
 ;;; something that "dispatches" on a symbol (e.g. (draw-shape <name> args)
-;;; rather than (draw-<name> args))
+;;; rather than (draw-<name> args)). COUNTERPOINT: becomes hard to give
+;;; interactive arglist
 ;;;- Only able to produce tikz DRAW commands, no node, clip etc.
+
+
+;; (defgeneric draw (thing &rest args))
+;; (defgeneric fill (thing &rest args))
+;; (defgeneric clip (thing &rest args))
 
 (defmacro defshape (name
                     (&rest args)
@@ -21,6 +27,7 @@
   (assert (symbolp name) () "~S has to be a symbol" name)
   (let ((%fun (symb "%" name))
         (draw-fun (symb 'draw- name))
+        (fill-fun (symb 'fill- name))
         (clip-fun (symb 'with- name '-clip))
         (fun-args `(,@args ,@(when key-args
                                (list* '&key key-args))))
@@ -42,14 +49,17 @@
          ;; The DRAW-<NAME> macro, simple wrapper around the previous
          ;; one
          (defun ,draw-fun ,draw-fun-args
-           (with-tikz-command (draw :options options)
+           (with-tikz-command (:draw :options options)
+             (,%fun ,@args ,@(parse-key-args key-args))))
+         (defun ,fill-fun ,draw-fun-args
+           (with-tikz-command (:fill :options options)
              (,%fun ,@args ,@(parse-key-args key-args))))
          ;; The WITH-<NAME>-CLIP macro, used to have a simpler way to
          ;; "crop" a drawing according to some predefined shape.
          ,(when clip
             `(defmacro ,clip-fun (,fun-args &body body)
-               `(with-env (scope)
-                  (with-tikz-command (clip)
+               `(with-env (:scope)
+                  (with-tikz-command (:clip)
                     (,',%fun ,,@args ,,@(parse-key-args key-args)))
                   ,@body)))
          ,(when export
@@ -75,7 +85,7 @@
   (format t " ~@[(~A)~] at ~A {~@[~A~]}" name (point-str x y) label))
 
 (defun add-node (x y &key name label options)
-  (with-tikz-command (node :options options)
+  (with-tikz-command (:node :options options)
     (format t " ~@[(~A)~] at ~A {~@[~A~]}" name (point-str x y) label)))
 
 (defun draw-square (xmin ymin &key (size 1) options)
@@ -84,14 +94,14 @@
     (draw-rectangle xmin ymin xmax ymax :options options)))
 
 (defun draw-edge (node-1 node-2 style &key options)
-  (with-tikz-command (path :options style)
+  (with-tikz-command (:path :options style)
     (format t "(~A) edge~A (~A)"
             node-1
             (format-options nil options :newline nil)
             node-2)))
 
 (defun draw-long-relative-path (xstart ystart path &key options)
-  (with-tikz-command (draw :options options)
+  (with-tikz-command (:draw :options options)
     (loop :initially (format t " ~A" (point-str xstart ystart))
           :with x = xstart
           :and y = ystart
@@ -122,7 +132,7 @@
             cycle)))
 
 (defmacro with-random-crop ((xmin ymin xmax ymax &key (step 2)) &body body)
-  `(with-env (scope)
+  `(with-env (:scope)
      (latex-command :pgfmathsetseed :mand-args (list 12345))
      (draw-rectangle ,xmin ,ymin ,xmax ,ymax
                      :options

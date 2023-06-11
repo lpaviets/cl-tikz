@@ -7,7 +7,8 @@
             :reader tileset
             :type (or tileset symbol)
             :documentation "The tileset to which this tile belongs")
-   (draw-function :accessor draw-function
+   (draw-function :initarg :draw-function
+                  :accessor draw-function
                   :type function
                   :documentation "Function of one argument, a POINT (X, Y),
  used to draw the tile at the position (X, Y)
@@ -17,8 +18,13 @@ A class deriving from TILE can also implement the following helper methods
 to be able to define tiles more easily:
 - MAKE-ROTATED-TILE
 - MAKE-TILE-DRAWING-FUNCTION"))
-    (:default-initargs
-     :tileset (error "A tileset is required for each Wang tile")))
+  (:default-initargs
+   :tileset (error "A tileset is required for each Wang tile")))
+
+(defclass product-tile (tile)
+  ((layers :initarg :layers
+           :reader layers
+           :documentation "A list of TILEs")))
 
 (defclass wang-tile (tile)
   ((sides :initarg :sides
@@ -130,6 +136,11 @@ by TURNS quarter-turns."))
           (colour-to-check (tile-colour t1 dir)))
       (gethash colour-to-check allowed-colours))))
 
+(defmethod valid-neighbour-p ((t1 product-tile) (t2 product-tile) dir)
+  (loop :for layer-1 :in (layers t1)
+        :for layer-2 :in (layers t2)
+        :always (valid-neighbour-p layer-1 layer-2 dir)))
+
 ;;; Drawing function
 (defmacro def-drawing-function (() &body body)
   "Return a function of one argument, a point POS, that draws BODY,
@@ -150,3 +161,8 @@ DEF-DRAWING-FUNCTION macro."))
   (with-tile-sides (left down right up) tile
     (def-drawing-function ()
       (draw-wang-tile 0 0 left down right up))))
+
+(defmethod make-tile-drawing-function ((tile product-tile))
+  (lambda (pos)
+    (loop :for layer :in (layers tile)
+          :do (funcall (draw-function layer) pos))))
