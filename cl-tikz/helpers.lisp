@@ -1,26 +1,36 @@
 (in-package #:org.numbra.cl-tikz)
 
+(defvar *math-mode-p* nil)
+
 (defun latex-command (command &key mand-args opt-args)
   (format t "\\~A" (normalise-string command))
   (when opt-args (format-options t opt-args :mandatory nil :newline nil))
   (when mand-args (format-options t mand-args :mandatory t :newline nil))
   (format t "~%"))
 
-(defmacro with-env ((env &key options) &body body)
-  (let ((varenv (normalise-string env)))
-    `(progn
+(defmacro with-env ((env &key options options-args) &body body)
+  (with-gensyms (varenv)
+    `(let ((,varenv (normalise-string ,env)))
        (format t "~&\\begin{~A}" ,varenv)
-       (format-options t ,options)
+       (apply #'format-options t ,options ,options-args)
        ,@body
        (format t "~&\\end{~A}" ,varenv))))
 
 (defmacro with-tikz-command ((command &key options) &body body)
-  (let ((varcommand (normalise-string command)))
-    `(progn
+  (with-gensyms (varcommand)
+    `(let ((,varcommand ,(normalise-string command)))
        (format t "\\~A" ,varcommand)
        (format-options t ,options :newline nil)
        ,@body
        (format t ";~%"))))
+
+(defmacro with-math (&body body)
+  `(if *math-mode-p*
+       (progn ,@body)
+       (let ((*math-mode-p* t))
+         (format t "\\[")
+         ,@body
+         (format t "~%\\]"))))
 
 (defun preamble (&key (documentclass :standalone) packages)
   "Write the preabme of the file.
@@ -62,8 +72,8 @@ where OPT-ARGS is a list formatted as in `format-options'"
                       ,@keys)
        (let ((*standard-output* ,stream))
          (preamble :packages ,packages :documentclass ,documentclass)
-         (with-env (document)
-             ,@body)
+         (with-env (:document)
+           ,@body)
          (format t "~2%~@{~A~%~}"
                  "%%% Local Variables:"
                  "%%% mode: latex"

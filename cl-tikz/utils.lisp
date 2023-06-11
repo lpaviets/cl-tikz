@@ -108,3 +108,29 @@ return this string once BODY terminates"
        (let ((*standard-output* ,string))
          ,@body)
        (get-output-stream-string ,string))))
+
+(defmacro do-array ((i j x array &optional return) &body body)
+  "Iterate over a 2D array.
+In the BODY:
+I, J are respectively bound to the first and second coordinate at each step
+X is bound the array[i][j] := (aref array i j)"
+  (with-gensyms ((garray array))
+    `(progn
+       (loop :for ,i :below (array-dimension ,garray 0)
+             :do
+                (loop :for ,j :below (array-dimension ,garray 1)
+                      :for ,x = (aref ,garray ,i ,j)
+                      :do ,@body))
+       ,return)))
+
+(defmacro do-product (((&rest vars) sequences ;; &optional return
+                       )
+                      &body body)
+  (with-gensyms ((gseq sequences))
+    (if (= 1 (length vars))
+        `(mapc (lambda (,(car vars))
+                 ,@body)
+               (car ,gseq))
+        `(mapc (lambda (,(car vars))
+                 (do-product (,(cdr vars) (cdr ,gseq)) ,@body))
+               (car ,gseq)))))

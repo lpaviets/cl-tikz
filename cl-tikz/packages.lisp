@@ -46,12 +46,17 @@
    #:with-env
    #:with-tikz-command
    #:with-preamble-to-file
+   ;; Some other environments
+   #:format-matrix
+   #:format-array
    ;; Generic utilities
    #:xor
    #:symb
    #:capture-stdout
    #:with-gensyms
    #:dohash
+   #:do-array
+   #:do-product
    #:list-to-set
    #:set-to-list
    #:nshuffle

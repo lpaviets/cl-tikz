@@ -14,4 +14,5 @@
                (:file "helpers")
                (:file "arrows")
                (:file "shapes")
+               (:file "matrix")
                (:file "cl-tikz")))
