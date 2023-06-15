@@ -57,6 +57,10 @@ a list"
 
 (defvar *float-approx-digits* 2)
 
+(defun point= (pt-a pt-b)
+  (and (= (point-x pt-a) (point-x pt-b))
+       (= (point-y pt-a) (point-y pt-b))))
+
 (defun point+ (pt-a pt-b)
   (make-point :x (+ (point-x pt-a) (point-x pt-b))
               :y (+ (point-y pt-a) (point-y pt-b))))

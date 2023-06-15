@@ -135,6 +135,27 @@
                             (vert "LimeGreen")
                             (diag red)))
 
+;; Unclear if it works
+(defparameter *lamplighter* (def-graph-substitution
+                              :vertices
+                              (u 0 0)
+                              (v -1 2)
+                              (w 1 2)
+                              (x 0 1)
+                              :edges
+                              (u v a)
+                              (u w b)
+                              (x v b)
+                              (x w a)
+                              :substitution
+                              (a (v u i))
+                              (b (w x i))
+                              (i (u u i) (v v i) (w w i) (x x i))
+                              :colours
+                              (a blue)
+                              (b green)
+                              (i red)))
+
 ;;;; Geometric
 (defparameter *chair*
   (def-geometric-subdivision

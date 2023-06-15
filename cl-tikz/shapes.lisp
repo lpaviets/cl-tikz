@@ -80,9 +80,20 @@
           step
           (point-str xmax ymax)))
 
-(defshape node (x y) (name label)
-    (:clip nil)
+
+
+(defun %node (x y &key name label)
   (format t " ~@[(~A)~] at ~A {~@[~A~]}" name (point-str x y) label))
+(defun draw-node (x y &key options name label)
+  (with-tikz-command (:node :options (cons 'draw options))
+    (%node x y :name name :label label)))
+(defun fill-node (x y &key options name label)
+  (with-tikz-command (:fill :options options)
+    (%node x y :name name :label label)))
+(export '(draw-node nil) (find-package "ORG.NUMBRA.CL-TIKZ"))
+;; (defshape node (x y) (name label)
+;;     (:clip nil)
+;;   (format t " ~@[(~A)~] at ~A {~@[~A~]}" name (point-str x y) label))
 
 (defun add-node (x y &key name label options)
   (with-tikz-command (:node :options options)

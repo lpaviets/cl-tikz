@@ -9,6 +9,7 @@
    #:point
    #:point-ensure
    #:point-absolute-point
+   #:point=
    #:point-x
    #:point-y
    #:point+
