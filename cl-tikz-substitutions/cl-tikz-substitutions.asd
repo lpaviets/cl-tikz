@@ -11,4 +11,5 @@
                (:file "utils")
                (:file "planar-graph")
                (:file "geometric")
-               (:file "examples")))
+               (:file "examples")
+               (:file "group-subst")))
