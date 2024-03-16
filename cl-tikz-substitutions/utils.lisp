@@ -18,8 +18,8 @@
     (error "Number ~S of steps cannot be negative" n)))
 
 (defun draw-substitution-in-file (base name steps)
-  (let ((filename (merge-pathnames (format nil "~A.tex" name))))
+  (let ((filename (merge-pathnames (format nil "examples/~A.tex" name))))
     (format t "~&Writing to file ~A~%" filename)
     (with-preamble-to-file (filename) ()
-      (with-env (tikzpicture)
+      (with-env (:tikzpicture)
         (draw-substitution base steps)))))

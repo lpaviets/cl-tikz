@@ -6,15 +6,19 @@
   :license  "Specify license here"
   :version "0.0.1"
   :serial t
-  :depends-on (:cl-tikz)
+  :depends-on (:cl-tikz :cl-sat.glucose :cl-ppcre)
   :components ((:file "packages")
                (:file "wang-tiles")
                (:file "tileset")
+               ;; (:file "topology")
                (:file "tiling")
                (:file "hom-shift")
                (:file "draw-tiles")
-               (:file "dancing-links")
-               (:file "solver")
+               (:module "solvers"
+                :components
+                ((:file "dancing-links")
+                 (:file "solver-naive")
+                 (:file "solver-sat")))
                (:module "examples"
                 :components
                 ((:file "small-aperiodics")

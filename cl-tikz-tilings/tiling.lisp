@@ -6,30 +6,12 @@
   ((tileset :initarg :tileset
             :reader tileset
             :type (or tileset symbol))
-   (surface :initarg :surface
-            :reader surface
-            :type array)
-   (bounds :initarg :bounds
-           :reader bounds
-           :type function)
-   (get-tile-fun :initarg :tile-fun
-                 :reader get-tile-fun
-                 :type function
-                 :documentation "Function of two arguments, a TILING and a POINT. Can assume that
-POINT is in the bounds of TILING, and should return the tile located at
-position POINT in TILING, or NIL if no such tile exists.")
-   (find-valid-tiles-fun :initarg :find-valid-tiles
-                         :reader find-valid-tiles-fun
-                         :type (or function symbol)
-                         :documentation "Function of two arguments, a POINT and a TILING. Can
-assume that POINT is in the bounds of TILING, and should return a list
-of all the valid tiles that can - locally - be placed at POINT.
-The list need not be a fresh list."))
+   (topology :initarg :topology
+             :reader topology
+             :type topology))
   (:default-initargs
    :tileset (error "A tileset is required to define a tiling")
-   :surface (error "A surface is required to define a tiling")
-   :bounds (error "A bounding function is required to define a tiling")
-   :find-valid-tiles 'find-all-valid-tiles))
+   :topology (error "A topology is required to define a tiling")))
 
 (defun make-tiling-grid (tileset width height &rest args)
   "Return a new empty tiling, using TILESET as its tileset, and which
@@ -40,28 +22,44 @@ tiles an WIDTHxHEIGHT rectangular grid"
                (and (<= 0 x (1- width))
                     (<= 0 y (1- height)))))
            (grid-tile-fun (tiling pos)
-             (aref (surface tiling) (point-y pos) (point-x pos))))
+             (aref (topology tiling) (point-y pos) (point-x pos))))
       (apply #'make-instance
              'tiling
              :tileset tileset
-             :surface grid
+             :topology grid
              :bounds #'grid-bounds
              :tile-fun #'grid-tile-fun
              args))))
 
+(defun make-tiling-torus (tileset width height &rest args)
+  "Return a new empty tiling, using TILESET as its tileset, and which
+tiles an WIDTHxHEIGHT torus."
+  (let ((torus (make-array (list height width) :initial-element nil)))
+    (flet ((torus-tile-fun (tiling pos)
+             (aref (topology tiling)
+                   (mod (point-y pos) height)
+                   (mod (point-x pos) width))))
+      (apply #'make-instance
+             'tiling
+             :tileset tileset
+             :topology torus
+             :bounds (constantly t)
+             :tile-fun #'torus-tile-fun
+             args))))
+
 (defun copy-tiling (tiling)
   (with-accessors ((tileset tileset)
-                   (surface surface)
+                   (topology topology)
                    (bounds bounds)
                    (tile-fun get-tile-fun))
       tiling
-    (let ((new-surface (make-array (array-dimensions surface))))
-      (loop :for idx :below (array-total-size surface)
-            :do (setf (row-major-aref new-surface idx)
-                      (row-major-aref surface idx)))
+    (let ((new-topology (make-array (array-dimensions topology))))
+      (loop :for idx :below (array-total-size topology)
+            :do (setf (row-major-aref new-topology idx)
+                      (row-major-aref topology idx)))
       (make-instance 'tiling
                      :tileset tileset
-                     :surface new-surface
+                     :topology new-topology
                      :bounds bounds
                      :tile-fun tile-fun))))
 
@@ -80,20 +78,20 @@ If NO-CHECK is non-NIL, don't test for out-of-boundness."
 (defun (setf tiling-tile-at) (val pos tiling &key no-check)
   (assert (or no-check (in-tiling-bounds-p pos tiling)) ()
           "Cannot set tile at ~S in tiling ~S~%" pos tiling)
-  (setf (aref (surface tiling) (point-y pos) (point-x pos)) val))
+  (setf (aref (topology tiling) (point-y pos) (point-x pos)) val))
 
 (defmacro dotiling ((pos tile &optional block-name) tiling &body body)
-  "Iterate over the surface tiled by TILING. Locally binds POS to the current
+  "Iterate over the topology tiled by TILING. Locally binds POS to the current
 position as a POINT, and TILE to the element of TILING at position POS,
 or NIL otherwise.
 Starts at the bottom-left corner (pos (0, 0)), and iterates row-wise.
 Wraps the iteration in a block called BLOCK-NAME"
-  (with-gensyms (height h width w (gtiling tiling) surface bounds oob)
+  (with-gensyms (height h width w (gtiling tiling) topology bounds oob)
     `(block ,block-name
-       (with-accessors ((,surface surface)
+       (with-accessors ((,topology topology)
                         (,bounds bounds))
            ,gtiling
-         (destructuring-bind (,height ,width) (array-dimensions ,surface)
+         (destructuring-bind (,height ,width) (array-dimensions ,topology)
            (loop :for ,h :below ,height :do
              (loop :for ,w :below ,width
                    :for ,pos = (point ,w ,h)

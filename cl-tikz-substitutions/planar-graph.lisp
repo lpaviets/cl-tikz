@@ -140,34 +140,27 @@ Each key is an edge type, and the values are lists of edges.")
                 new-vertices))
         (dohash (edge) edges
           (destructuring-bind (beg end type) edge
-            (let ((beg-v (vertex beg (vertex-pos-in-substitution pos beg graph)))
-                  (end-v (vertex end (vertex-pos-in-substitution pos end graph))))
+            (let ((beg-v (find beg new-vertices :key #'name))
+                  (end-v (find end new-vertices :key #'name)))
+              (assert (and beg-v end-v))
               (push (edge beg-v end-v type) new-edges))))
         (values new-vertices new-edges)))))
 
-(defun substitute-edge (edge graph)
-  "EDGE is a list of length 3 (BEG END TYPE) where
-BEG and END are of type POINT"
+(defun substitute-edge (edge graph start-subst end-subst)
   (with-accessors ((vertices graph-vertices)
                    (edges graph-edges)
                    (subst graph-substitution))
       graph
     (let (new-edges)
-      (with-accessors ((beg edge-start)
-                       (end edge-end)
-                       (type edge-type))
+      (with-accessors ((type edge-type))
           edge
         (let ((substituted-edges (substitute-edge-list-edges edge graph)))
           (dolist (subst-edge substituted-edges)
-            (destructuring-bind (subst-beg-name subst-end-name subst-type) subst-edge
-              (let ((new-beg (vertex subst-beg-name
-                                     (vertex-pos-in-substitution (pos beg)
-                                                                 subst-beg-name
-                                                                 graph)))
-                    (new-end (vertex subst-end-name
-                                     (vertex-pos-in-substitution (pos end)
-                                                                 subst-end-name
-                                                                 graph))))
+            (destructuring-bind (subst-beg-name subst-end-name subst-type)
+                subst-edge
+              (let ((new-beg (find subst-beg-name start-subst :key #'name))
+                    (new-end (find subst-end-name end-subst :key #'name)))
+                (assert (and new-beg new-end))
                 (push (edge new-beg new-end subst-type) new-edges))))
           new-edges)))))
 
@@ -175,14 +168,17 @@ BEG and END are of type POINT"
   (with-accessors ((vertices graph-vertices)
                    (edges graph-edges))
       graph
-    (let (1-vertices
+    (let ((table (make-hash-table :test #'eq))
+          1-vertices
           1-edges)
       (dohash (v pos) vertices
-        (push (vertex v pos) 1-vertices))
+        (let ((new-v (vertex v pos)))
+          (push new-v 1-vertices)
+          (setf (gethash v table) new-v)))
       (dohash (edge) edges
         (destructuring-bind (beg end type) edge
-          (push (edge (vertex beg (vertex-pos-in-graph beg graph))
-                      (vertex end (vertex-pos-in-graph end graph))
+          (push (edge (gethash beg table)
+                      (gethash end table)
                       type)
                 1-edges)))
       (values 1-vertices 1-edges))))
@@ -197,20 +193,29 @@ BEG and END are of type POINT"
         (1-substitute-graph graph)
         (multiple-value-bind (n-1-vertices n-1-edges)
             (n-substitute-graph graph (1- n))
-          (let ((subst-of-vertices
-                  (loop :for v :in n-1-vertices
-                        :for (subst-v-vertices
-                              subst-v-edges)
-                          = (multiple-value-list (substitute-vertex v graph))
-                        :nconc subst-v-vertices :into subst-vertices
-                        :nconc subst-v-edges :into subst-edges
-                        :finally (return (list subst-vertices
-                                               subst-edges))))
-                (subst-of-edges (loop :for edge :in n-1-edges
-                                      :nconc (substitute-edge edge graph))))
+          (let* ((table (make-hash-table :test #'eq))
+                 (subst-of-vertices
+                   (loop :for v :in n-1-vertices
+                         :for (subst-v-vertices
+                               subst-v-edges)
+                           = (multiple-value-list (substitute-vertex v graph))
+                         :do (setf (gethash v table) subst-v-vertices)
+                         :append subst-v-vertices :into subst-vertices
+                         :append subst-v-edges :into subst-edges
+                         :finally (return (list subst-vertices
+                                                subst-edges))))
+                 (subst-of-edges
+                   (loop :for edge :in n-1-edges
+                         :for start = (gethash (edge-start edge) table)
+                         :for end = (gethash (edge-end edge) table)
+                         :do (assert (and start end))
+                         :append (substitute-edge edge
+                                                  graph
+                                                  start
+                                                  end))))
             (values (first subst-of-vertices)
-                    (nconc (second subst-of-vertices)
-                           subst-of-edges)))))))
+                    (append (second subst-of-vertices)
+                            subst-of-edges)))))))
 
 (defun vertex-node-name (vertex)
   (with-point (x y) (pos vertex)
@@ -219,10 +224,9 @@ BEG and END are of type POINT"
 (defun draw-vertex-1 (vertex)
   (with-accessors ((pos pos))
       vertex
-    (draw-node (point-x pos) (point-y pos)
+    (draw-node (+ (random 0.35) (point-x pos)) (+ (random 0.35) (point-y pos))
                :name (vertex-node-name vertex) ;; to correct
-               :options (make-options :draw t
-                                      :circle t
+               :options (make-options :circle t
                                       :|inner sep| "2pt"))))
 
 (defun edge-colour (edge graph)
