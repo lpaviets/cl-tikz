@@ -65,8 +65,8 @@ Otherwise, returns (PRINC-TO-STRING DESIGNATOR)"
                   ,@body)
                 ,table))))
 
-(defun list-to-set (list &optional (default-value t))
-  (let ((table (make-hash-table)))
+(defun list-to-set (list &key (default-value t) (test 'eql))
+  (let ((table (make-hash-table :test test)))
     (dolist (x list)
       (setf (gethash x table) default-value))
     table))

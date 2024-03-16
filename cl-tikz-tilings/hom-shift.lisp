@@ -7,7 +7,7 @@
            :reader vertex-name)
    (valid-neighbours :initarg :neighbours
                      :reader valid-neighbours
-                     :documentation "A list of valid colours that can be placed
+                     :documentation "A list of valid vertices that can be placed
 next to this tile."))
   (:default-initargs
    :colour (error "Must specify a colour when defining a Hom-Shift tile")))

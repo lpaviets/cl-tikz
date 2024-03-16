@@ -6,14 +6,19 @@
     (:blue :green)
     (:green :red)))
 
-(defvar *house*
-  (defhomshift house
+(defparameter *house*
+  (defhomshift house ()
     (:blue :red)
     (:blue :green)
     (:green :red)
     (:red :purple)
     (:purple :yellow)
     (:yellow :green)))
+
+(defparameter *golden-mean*
+  (defhomshift golden-mean ()
+    (:white :black)
+    (:white :white)))
 
 (defparameter *ken-katabami-loop*
   (defhomshift ken-katabami-loop
