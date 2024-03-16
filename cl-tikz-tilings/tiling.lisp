@@ -96,6 +96,7 @@ would fall outside the bounds of the tiling, use NIL instead."
   (loop :for  pt :in (point-neighbours pos)
         :collect (tiling-tile-at pt tiling)))
 
+;; TODO: more involved check than just looking at neighbours.
 (defun tiling-valid-p (tiling)
   (dotiling (pos tile) tiling
     (unless (apply #'tile-fits-with-p tile (tiling-neighbours-of pos tiling))

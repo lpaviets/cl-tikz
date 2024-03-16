@@ -82,3 +82,16 @@ pair (COLOUR . T), it will be coloured with the colour named U."
                  :tileset (tileset tile)
                  :colour (colour tile)
                  :neighbours (valid-neighbours tile)))
+
+;; Some convenience functions
+(defun hom-shift-fill-row-cycle (tiling cycle row)
+  (let ((new-cycle (copy-list cycle))
+        (tileset (tileset tiling)))
+    (setf (cdr (last new-cycle)) new-cycle)
+    (destructuring-bind (height width) (tiling-dimensions tiling)
+      (declare (ignore height))
+      (loop :for x :below width
+            :for vertex :in new-cycle
+            :for tile = (hom-shift-tile-from-vertex vertex tileset)
+            :do (setf (tiling-tile-at (point x row) tiling) tile)))
+    tiling))

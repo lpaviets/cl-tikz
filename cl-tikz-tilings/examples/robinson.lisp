@@ -1,5 +1,13 @@
 (in-package #:org.numbra.cl-tikz-tilings)
 
+;;; TODO:  Fix so that:
+;;; - it is cleaner
+;;; - it works as a nearest neighbour SFT
+;;; Probably good idea: use the classes VARIANT-WANG-TILE and PRODUCT-TILE
+;;; Reference for some description: https://www.math.brown.edu/reschwar/MFS/handout9.pdf
+;;; Red/Green in our tiles <=> simple/double arrows
+;;; Or https://www.labri.fr/perso/vdelecro/jm2018/215524.pdf (that's a friend !)
+
 (defclass robinson-tile (tile)
   ((cornerp :initarg :cornerp
             :reader cornerp
@@ -97,7 +105,7 @@ The rule is that two parity tiles can't be placed next to each other.")
 
 (defun robinson-side-arrow-to-tikz-options (side)
   (let ((arrowinp (eq (robinson-side-arrow side) :in)))
-   (option-arrow-head-at (if arrowinp 0.7 0.98) arrowinp :style 'latex)))
+   (option-arrow-head-at (if arrowinp 0.7 0.98) :reversed arrowinp :style 'latex)))
 
 (defmethod make-tile-drawing-function ((tile robinson-tile))
   (with-tile-sides (left down right up) tile
