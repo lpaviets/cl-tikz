@@ -1,4 +1,9 @@
 (in-package #:org.numbra.cl-tikz-tilings)
+
+;;; TODO:
+;;; - Fix width-height vs m-n vs ... i.e. parameter consistency
+;;; - Interact with TILING/TOPOLOGY classes: should not have to give explicit parameters
+
 ;; need to load cl-sat and (e.g.) cl-sat.glucose
 
 ;; Variable xijt is true if tile t at pos (i, j)
@@ -49,22 +54,6 @@
                   clauses)))))
     (cons 'and clauses)))
 
-;; Example
-(defun golden-mean (n m)
-  (let* ((tiles '(0 1))
-         (clauses (list (one-tile-per-pos n m tiles))))
-    (dotimes (i n)
-      (dotimes (j m)
-        (when (< i (1- n))
-          (push `(not (and ,(var-i-j-tile i j 1)
-                           ,(var-i-j-tile (1+ i) j 1)))
-                clauses))
-        (when (< j (1- m))
-          (push `(not (and ,(var-i-j-tile i j 1)
-                           ,(var-i-j-tile i (1+ j) 1)))
-                clauses))))
-    (cons 'and clauses)))
-
 ;; Run solver and parse solution
 (defun get-tiling-from-solver (n m res)
   (assert (= (* n m) (length res)))
@@ -93,9 +82,28 @@
   (let ((fun (lambda (n m) (clauses-from-from-hom-shift tileset n m))))
     (proto-solve n m fun)))
 
-;; (defun solver-hom-shift (tiling &key random)
-;;   (declare (ignore random))
-;;   (let ((tileset (tileset tiling))
-;;         (m ))))
+(defun solver-hom-shift (tiling &key random)
+  (declare (ignore random))
+  (let ((tileset (tileset tiling)))
+    (destructuring-bind (height width)
+        (tiling-dimensions tiling)
+      (let* ((clauses (clauses-from-from-hom-shift (tileset tiling)
+                                                   height width))
+             (solution (cl-sat:solve clauses :glucose))
+             (copied-tiling (copy-tiling tiling)))
+        (when solution
+          (flet ((set-tile-from-solution (tile)
+                   (ppcre:register-groups-bind ((#'parse-integer i)
+                                                (#'parse-integer j)
+                                                name)
+                       ("^\(\\d+\)-\(\\d+\)-\(.*\)$" (symbol-name tile))
+                     (let ((tile-at-i-j
+                             (hom-shift-tile-from-vertex name
+                                                         tileset
+                                                         :test (lambda (x y)
+                                                                 (string-equal x (symbol-name y))))))
+                       (setf (tiling-tile-at (point j i) copied-tiling) tile-at-i-j)))))
+            (mapc #'set-tile-from-solution solution))
+          copied-tiling)))))
 
 ;; Idea: add a way to specify neighbourhoods ?

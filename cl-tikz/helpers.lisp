@@ -16,13 +16,13 @@
        ,@body
        (format t "~&\\end{~A}" ,varenv))))
 
-(defmacro with-tikz-command ((command &key options) &body body)
+(defmacro with-tikz-command ((command &key options (newline t)) &body body)
   (with-gensyms (varcommand)
     `(let ((,varcommand ,(normalise-string command)))
        (format t "\\~A" ,varcommand)
        (format-options t ,options :newline nil)
        ,@body
-       (format t ";~%"))))
+       (format t ";~:[ ~;~%~]" ,newline))))
 
 (defmacro with-math (&body body)
   `(if *math-mode-p*

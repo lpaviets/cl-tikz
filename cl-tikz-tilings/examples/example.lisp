@@ -3,7 +3,7 @@
 (defparameter *examples-directory*
   #P"output-examples/")
 
-(defun gen-example-tiling (tileset m n &key (solver 'solve-naive) (crop t) with-grid)
+(defun gen-example-tiling (tileset m n &key (solver 'solve-naive) (crop t) (with-grid t))
   (let* ((filename (merge-pathnames (format nil "test-~A-~Dx~D.tex"
                                             (tileset-name tileset)
                                             m n)
@@ -19,7 +19,7 @@
               (draw-tiling solution :with-grid with-grid)))))
     solution))
 
-(defun gen-example-periodic (tileset m n &key (solver 'solve-naive) (crop t) with-grid)
+(defun gen-example-periodic (tileset m n &key (solver 'solve-naive) (crop t) (with-grid t))
   (let* ((filename (merge-pathnames (format nil "test-periodic-~A-~Dx~D.tex"
                                             (tileset-name tileset)
                                             m n)

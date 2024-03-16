@@ -22,11 +22,10 @@ If RANDOM is non-nil, the nodes are explored in a random order, i.e.
 tiles are tried non-deterministically.
 Otherwise, the order is defined by (DOTILES (TILE (TILESET TILING)) ...)"
   (loop :with copied-tiling = (copy-tiling tiling)
-        :with find-valid-tiles = (find-valid-tiles-fun tiling)
         :with history = ()
         :for empty-pos = (find-empty-cell copied-tiling)
         :for possible-tiles = (when empty-pos
-                                (funcall find-valid-tiles empty-pos copied-tiling))
+                                (find-all-valid-tiles empty-pos copied-tiling))
         ;; If we have no empty position, our job is done
         :unless empty-pos
           :do (return (tiling-valid-p copied-tiling))

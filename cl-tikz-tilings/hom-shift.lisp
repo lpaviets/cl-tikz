@@ -15,8 +15,9 @@ next to this tile."))
 ;;; Hom-Shift
 (defmethod make-tile-drawing-function ((tile hom-shift-tile))
   (def-drawing-function ()
-    (with-tikz-command (fill :options `((fill . ,(colour tile))))
-      (format t " ~A rectangle ~A" (point-str -0.5 -0.5) (point-str 0.5 0.5)))))
+    (with-tikz-command (fill :options `((fill . ,(colour tile))) :newline nil)
+      (format t " ~A rectangle ~A" (point-str -0.5 -0.5) (point-str 0.5 0.5)))
+    (format t " % ~A~%" (vertex-name tile))))
 
 (defun make-hom-shift-tile (tileset vertex colour valid-neighbours)
   (make-instance 'hom-shift-tile
@@ -55,6 +56,12 @@ pair (COLOUR . T), it will be coloured with the colour named U."
                                    neighbours)
               tiles)))
     (make-tileset name (list-to-set tiles))))
+
+;; TODO Make faster: the hom-shift could remember that info ...
+(defun hom-shift-tile-from-vertex (vertex tileset &key (test 'eql))
+  (dotiles (tile tileset)
+    (when (funcall test vertex (vertex-name tile))
+      (return-from hom-shift-tile-from-vertex tile))))
 
 (defmacro defhomshift (name colours &body edges)
   "See `make-hom-shift-from-edges'"

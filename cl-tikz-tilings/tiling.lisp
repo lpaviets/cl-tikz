@@ -48,6 +48,9 @@ tiles an WIDTHxHEIGHT torus."
 (defun in-tiling-bounds-p (pos tiling)
   (funcall (bounds tiling) pos))
 
+(defun tiling-dimensions (tiling)
+  (array-dimensions (%content (topology tiling))))
+
 (defun tiling-tile-at (pos tiling &key out-of-bounds no-check)
   "Return the tile at position POS in TILING.
 If no tile is present, return NIL.
@@ -75,17 +78,15 @@ of TILING at position POS, or NIL otherwise.
 Starts at the bottom-left corner (pos (0, 0)), and iterates row-wise.
 
 Wraps the iteration in a block called BLOCK-NAME"
-  (with-gensyms (height h width w (gtiling tiling) topology oob)
+  (with-gensyms (height h width w (gtiling tiling) oob)
     `(block ,block-name
-       (with-accessors ((,topology topology))
-           ,gtiling
-         (destructuring-bind (,height ,width) (array-dimensions (%content ,topology))
-           (loop :for ,h :below ,height :do
-             (loop :for ,w :below ,width
-                   :for ,pos = (point ,w ,h)
-                   :for ,tile = (tiling-tile-at ,pos ,gtiling :out-of-bounds ',oob)
-                   :unless (eq ',oob ,tile)
-                     :do ,@body)))))))
+       (destructuring-bind (,height ,width) (tiling-dimensions ,gtiling)
+         (loop :for ,h :below ,height :do
+           (loop :for ,w :below ,width
+                 :for ,pos = (point ,w ,h)
+                 :for ,tile = (tiling-tile-at ,pos ,gtiling :out-of-bounds ',oob)
+                 :unless (eq ',oob ,tile)
+                   :do ,@body))))))
 
 (defun tiling-neighbours-of (pos tiling)
   "List of four neighbours of POS in the tiling TILING
