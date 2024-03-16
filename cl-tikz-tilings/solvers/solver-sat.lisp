@@ -69,6 +69,7 @@
            (tiles (set-to-list (tileset-tiles tileset)))
            (clauses (list (clauses-prefilled-tiling tiling mappings)
                           (one-tile-per-pos n m tiles mappings)))
+           (extra-rules (extra-rules tileset))
            (valid-pairs (valid-pairs-up-right tileset))
            (valid-pairs-up (car valid-pairs))
            (valid-pairs-right (cdr valid-pairs)))
@@ -90,49 +91,11 @@
                          ,@(loop :for neighbour :in (gethash tile valid-pairs-right) ; up or right ?!
                                  :collect (var-i-j-tile i (1+ j) neighbour mappings)))
                     clauses)))))
+      (when extra-rules
+        (dotimes (i n)
+          (dotimes (j m)
+            (push (funcall extra-rules i j mappings) clauses))))
       (cons 'and clauses))))
-
-;; TODO: may be move this somewhere else ?
-
-;; Use parallel version !
-
-;; The version installed by CL-SAT is buggy, or at least doesn't work for unknown reasons.
-(defparameter *glucose-home* "/home/aminumbra/from_source/glucose/")
-
-(defun glucose-binary (&optional (*glucose-home* *glucose-home*))
-  (merge-pathnames "parallel/glucose-syrup" *glucose-home*))
-
-(defmethod cl-sat:solve ((input pathname)
-                         (solver (eql :glucose-parallel))
-                         &rest options &key debug &allow-other-keys)
-  (remf options :debug)
-  (pushnew "-model " options :test 'string-equal)
-  (cl-sat:with-temp (dir :directory t :template "glucose.XXXXXXXX" :debug debug)
-    ;; Ugly command: parallel version is broken, so does not output file ...
-    (let* ((command (format nil "cd ~a; ~a ~{~A~^ ~}~a > ~a"
-                            (namestring dir)
-                            (namestring (glucose-binary))
-                            options (namestring input) "result")))
-      (format t "~&; ~a~%" command)
-      (trivia:multiple-value-match (uiop:run-program command
-                                                     :output *standard-output*
-                                                     :error-output *error-output*
-                                                     :ignore-error-status t)
-        ((_ _ 0)
-         ;; indeterminite
-         (values nil nil nil))
-        ((_ _ 10)
-         ;; sat
-         (let ((fix-result-command (format nil "cd ~a; sed -i -e '/^v/!d; s/^v //' ~a"
-                                           (namestring dir)
-                                           "result")))
-           (uiop:run-program fix-result-command
-                             :output *standard-output*
-                             :error-output *error-output*)
-           (cl-sat:parse-assignments (format nil "~a/result" dir) cl-sat:*instance*))) ; Bug here ?
-        ((_ _ 20)
-         ;; unsat
-         (values nil nil t))))))
 
 ;; Run solver and parse solution
 (defun solver-sat (tiling &key random)
@@ -148,8 +111,10 @@
                                             (#'parse-integer j)
                                             (#'parse-integer num))
                    ("^\(\\d+\)-\(\\d+\)-\(.*\)$" (symbol-name var))
-                 (let ((tile-at-i-j (gethash num (cdr mappings))))
-                   (setf (tiling-tile-at (point j i) copied-tiling) tile-at-i-j)))))
+                 (let ((tile-at-i-j (gethash num (cdr mappings)))
+                       (pos (point j i)))
+                   (when (tiling-in-bounds-p pos copied-tiling)
+                     (setf (tiling-tile-at pos copied-tiling) tile-at-i-j))))))
         (mapc #'set-tile-from-solution solution))
       copied-tiling)))
 

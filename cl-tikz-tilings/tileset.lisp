@@ -2,20 +2,29 @@
 
 ;;; Tile sets
 
+;; TODO: clarify the language in which we specify extra rules
 (defclass tileset ()
   ((name :initarg :name
          :reader tileset-name
          :type symbol)
    (tiles :initarg :tiles
           :accessor tileset-tiles
-          :type hash-table)))
+          :type hash-table)
+   (extra-rules :initarg :rules
+                :accessor extra-rules
+                :documentation "Extra-rules that are not checked by TILES themselves.
+
+A clause, suitable for sat-solvers. It has to - and will - be checked at every
+position of a tiling.
+
+Must be defined by `def-extra-rules', which see.")))
 
 (defmacro dotiles ((tile tileset) &body body)
   `(dohash (,tile) (tileset-tiles ,tileset)
      ,@body))
 
-(defun make-tileset (name tiles)
-  (make-instance 'tileset :name name :tiles tiles))
+(defun make-tileset (name tiles &optional rules)
+  (make-instance 'tileset :name name :tiles tiles :rules rules))
 
 (defmacro defwangtiles (name &body tiles-sides)
   (with-gensyms  (tiles tile)

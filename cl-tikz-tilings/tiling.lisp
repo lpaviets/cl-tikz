@@ -45,7 +45,7 @@ tiles an WIDTHxHEIGHT torus."
                    :tileset tileset
                    :topology (copy-topology topology))))
 
-(defun in-tiling-bounds-p (pos tiling)
+(defun tiling-in-bounds-p (pos tiling)
   (funcall (bounds tiling) pos))
 
 (defun tiling-dimensions (tiling)
@@ -56,12 +56,12 @@ tiles an WIDTHxHEIGHT torus."
 If no tile is present, return NIL.
 If POS is out of the bounds of TILING, return OUT-OF-BOUNDS
 If NO-CHECK is non-NIL, don't test for out-of-boundness."
-  (if (or no-check (in-tiling-bounds-p pos tiling))
+  (if (or no-check (tiling-in-bounds-p pos tiling))
       (topology-tile-at (topology tiling) pos)
       out-of-bounds))
 
 (defun (setf tiling-tile-at) (val pos tiling &key no-check)
-  (assert (or no-check (in-tiling-bounds-p pos tiling)) ()
+  (assert (or no-check (tiling-in-bounds-p pos tiling)) ()
           "Cannot set tile at ~S in tiling ~S~%" pos tiling)
   (setf (topology-tile-at (topology tiling) pos) val))
 

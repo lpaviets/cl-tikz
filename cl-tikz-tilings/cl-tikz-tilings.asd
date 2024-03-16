@@ -18,6 +18,7 @@
                 :components
                 ((:file "dancing-links")
                  (:file "solver-naive")
+                 (:file "glucose-fix")
                  (:file "solver-sat")))
                (:module "examples"
                 :components

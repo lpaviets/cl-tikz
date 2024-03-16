@@ -126,10 +126,12 @@ The rule is that two parity tiles can't be placed next to each other.")
                        (:center 0)
                        (:left -0.25)
                        (:right 0.25)))
-              (height (if (and (cornerp tile) (eq colour :red)) -0.25 0)))
+              (height (if (and (cornerp tile) (eq colour :red)) -0.25 0))
+              (draw-colour (format nil "~(~A~)!60!black" colour)))
           (draw-line width height width 0.5
                      :options `(,(robinson-side-arrow-to-tikz-options up)
-                                ,colour))))
+                                ,draw-colour
+                                "thick"))))
 
       ;; Left side
       (with-accessors ((colour robinson-side-colour)
@@ -140,10 +142,12 @@ The rule is that two parity tiles can't be placed next to each other.")
                         (:center 0)
                         (:down -0.25)
                         (:up 0.25)))
-              (width (if (and (cornerp tile) (eq colour :red)) 0.25 0)))
+              (width (if (and (cornerp tile) (eq colour :red)) 0.25 0))
+              (draw-colour (format nil "~(~A~)!60!black" colour)))
           (draw-line width height -0.5 height
                      :options `(,(robinson-side-arrow-to-tikz-options left)
-                                ,colour))))
+                                ,draw-colour
+                                "thick"))))
 
       ;; Down side
       (with-accessors ((colour robinson-side-colour)
@@ -154,10 +158,12 @@ The rule is that two parity tiles can't be placed next to each other.")
                        (:center 0)
                        (:left -0.25)
                        (:right 0.25)))
-              (height (if (and (cornerp tile) (eq colour :red)) 0.25 0)))
+              (height (if (and (cornerp tile) (eq colour :red)) 0.25 0))
+              (draw-colour (format nil "~(~A~)!60!black" colour)))
           (draw-line width height width -0.5
                      :options `(,(robinson-side-arrow-to-tikz-options down)
-                                ,colour))))
+                                ,draw-colour
+                                "thick"))))
 
       ;; Right side
       (with-accessors ((colour robinson-side-colour)
@@ -168,10 +174,12 @@ The rule is that two parity tiles can't be placed next to each other.")
                         (:center 0)
                         (:down -0.25)
                         (:up 0.25)))
-              (width (if (and (cornerp tile) (eq colour :red)) -0.25 0)))
+              (width (if (and (cornerp tile) (eq colour :red)) -0.25 0))
+              (draw-colour (format nil "~(~A~)!60!black" colour)))
           (draw-line width height 0.5 height
                      :options `(,(robinson-side-arrow-to-tikz-options right)
-                                ,colour)))))))
+                                ,draw-colour
+                                "thick")))))))
 
 
 (defun make-find-all-valid-robinson-tiles ()
@@ -214,8 +222,9 @@ The rule is that two parity tiles can't be placed next to each other.")
                     (get-cache tile-neighbours (remove-if-not #'tile-fits-p parity-tiles))
                     (get-cache tile-neighbours (remove-if-not #'tile-fits-p all-tiles))))))))))
 
-(defvar *robinson*
-  (let ((robinson-tiles (make-hash-table :test 'eq)))
+(defparameter *robinson*
+  (let ((robinson-tiles (make-hash-table :test 'eq))
+        (specials nil))
     (dolist (tile (list (make-robinson-tile 'robinson t t
                                             '(:green :center :out)
                                             '(:red :left :out)
@@ -257,5 +266,27 @@ The rule is that two parity tiles can't be placed next to each other.")
                                             '(:red :up :in)
                                             '(:red :right :out))))
       (dotimes (turns 4)
-        (setf (gethash (make-rotated-tile tile turns) robinson-tiles) t)))
-    (make-tileset 'robinson robinson-tiles)))
+        (let ((rotated-tile (make-rotated-tile tile turns)))
+          (setf (gethash rotated-tile robinson-tiles) t)
+          (when (and (cornerp tile)
+                     (parity tile))
+            (push rotated-tile specials)))))
+    ;; Extra-rules for SAT solver
+    (labels ((some-specials-var (i j mappings)
+               (cons 'or
+                     (loop :for special :in specials
+                           :collect (var-i-j-tile i j special mappings))))
+             (rules (i j mappings)
+               `(and
+                 ;; Only one special per 2x2 square
+                 ;; If we have one in (i, j), none in the three other positions
+                 (or (not ,(some-specials-var i j mappings))
+                     (and (not ,(some-specials-var (1+ i) j mappings))
+                          (not ,(some-specials-var (1+ i) (1+ j) mappings))
+                          (not ,(some-specials-var i (1+ j) mappings))))
+                 ;; But we have at least one !
+                 (or ,(some-specials-var i j mappings)
+                     ,(some-specials-var (1+ i) j mappings)
+                     ,(some-specials-var i (1+ j) mappings)
+                     ,(some-specials-var (1+ i) (1+ j) mappings)))))
+      (make-tileset 'robinson robinson-tiles #'rules))))
