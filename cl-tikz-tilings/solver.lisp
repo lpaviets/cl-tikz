@@ -32,7 +32,7 @@ Otherwise, the order is defined by (DOTILES (TILE (TILESET TILING)) ...)"
           :do (return (tiling-valid-p copied-tiling))
         :when random
           :do (setf possible-tiles (nshuffle possible-tiles))
-        :when possible-tiles       ; If we can continue the tiling ...
+        :if possible-tiles              ; If we can continue the tiling ...
           :do (setf (tiling-tile-at empty-pos
                                     copied-tiling
                                     :no-check t)
@@ -40,13 +40,11 @@ Otherwise, the order is defined by (DOTILES (TILE (TILESET TILING)) ...)"
               ;; We store the other tiles in HISTORY in case we chose wrong
               (push (cons empty-pos (cdr possible-tiles)) history)
         :else
-          :do (unless history       ; if we can't back-up, we are done
+          :do (unless history           ; if we can't back-up, we are done
                 (return (tiling-valid-p copied-tiling)))
-              (loop :for ((prev-pos . other-tiles) . rest) :on history
-                    :until other-tiles
-                    ;; We made the wrong choice: we reset the tiling
-                    :do (setf (tiling-tile-at prev-pos copied-tiling :no-check t) nil)
-                        ;; We also remove this entry from the history
+              (loop :while (null (cdr (first history))) ; Undo "forced" history
+                                                        ;; We made the wrong choice: we reset the tiling
+                    :do (setf (tiling-tile-at (caar history) copied-tiling :no-check t) nil)
                         (pop history))
               ;; We now need to take an alternate choice
               (let ((next-tile (pop (cdar history))))

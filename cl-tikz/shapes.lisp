@@ -13,11 +13,11 @@
         (ymax (+ ymin size)))
     (draw-rectangle xmin ymin xmax ymax :options options)))
 
-(defun draw-grid (xmin ymin xmax ymax &key (step 1) options)
+(defun draw-grid (xmin ymin xmax ymax &key options grid-options)
   (with-tikz-command (draw :options options)
-    (format t " ~A grid[step=~D] ~A"
+    (format t " ~A grid~A ~A"
             (point-str xmin ymin)
-            step
+            (format-options nil grid-options)
             (point-str xmax ymax))))
 
 (defun draw-node (x y &key name label options)
@@ -62,14 +62,14 @@
                     points)
             cycle)))
 
-(defmacro with-random-crop ((xmin ymin xmax ymax &key (step 2)) &body body)
+(defmacro with-random-crop ((xmin ymin xmax ymax &key (step 6)) &body body)
   `(with-env (scope)
      (latex-command :pgfmathsetseed :mand-args (list 12345))
      (draw-rectangle ,xmin ,ymin ,xmax ,ymax
                      :options
                      (make-options :decoration
                                    ,(format nil
-                                            "{random steps, segment length=~Amm}"
+                                            "{random steps, amplitude=2pt, segment length=~Apt}"
                                             step)
                                    :decorate t
                                    :clip t))

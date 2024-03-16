@@ -3,6 +3,8 @@
 (defclass hom-shift-tile (tile)
   ((colour :initarg :colour
            :reader colour)
+   (vertex :initarg :vertex
+           :reader vertex-name)
    (valid-neighbours :initarg :neighbours
                      :reader valid-neighbours
                      :documentation "A list of valid colours that can be placed
@@ -13,30 +15,50 @@ next to this tile."))
 ;;; Hom-Shift
 (defmethod make-tile-drawing-function ((tile hom-shift-tile))
   (def-drawing-function ()
-    (draw-square -0.5 -0.5 :options `((fill . ,(colour tile))))))
+    (with-tikz-command (fill :options `((fill . ,(colour tile))))
+      (format t " ~A rectangle ~A" (point-str -0.5 -0.5) (point-str 0.5 0.5)))))
 
-(defun make-hom-shift-tile (tileset colour valid-neighbours)
+(defun make-hom-shift-tile (tileset vertex colour valid-neighbours)
   (make-instance 'hom-shift-tile
                  :tileset tileset
+                 :vertex vertex
                  :colour colour
                  :neighbours valid-neighbours))
 
-(defun make-hom-shift-from-edges (name edges)
-  (let ((all-colours (make-hash-table :test 'equal)))
-    (loop :for (x y) :in edges
-          :do (pushnew y (gethash x all-colours))
-              (pushnew x (gethash y all-colours)))
-    (make-tileset name
-                  (let (tiles)
-                    (dohash (colour neighbours) all-colours
-                      (push (make-hom-shift-tile name
-                                                 colour
-                                                 neighbours)
-                            tiles))
-                    (list-to-set tiles)))))
+(defun make-hom-shift-from-edges (name edges &optional colours)
+  "Create a Hom-Shift named NAME.
 
-(defmacro defhomshift (name &body edges)
-  `(make-hom-shift-from-edges ',name ',edges))
+EDGES is a list of pairs (U V) of vertices.
+
+COLOURS is a list of pairs (COLOUR . VERTEX*), where:
+- VERTEX* is a list of vertices, or T.
+- COLOUR is the colour with which it will be drawn.
+
+The pair (COLOUR . T) can only appear once, and should be last in the list
+COLOURS. It acts as a default for vertices not appearing in any other pair.
+
+If a vertex U does not appear in COLOURS, and COLOURS does not contain a
+pair (COLOUR . T), it will be coloured with the colour named U."
+  (let ((vertices (make-hash-table :test 'equal))
+        (tiles nil))
+    (loop :for (x y) :in edges
+          :do (pushnew y (gethash x vertices) :test #'equal)
+              (pushnew x (gethash y vertices) :test #'equal))
+    (dohash (vertex neighbours) vertices
+      (let ((colour (car (rassoc-if (lambda (v)
+                                      (or (eq v t)
+                                          (member vertex v)))
+                                    colours))))
+        (push (make-hom-shift-tile name
+                                   vertex
+                                   (or colour vertex)
+                                   neighbours)
+              tiles)))
+    (make-tileset name (list-to-set tiles))))
+
+(defmacro defhomshift (name colours &body edges)
+  "See `make-hom-shift-from-edges'"
+  `(make-hom-shift-from-edges ',name ',edges ',colours))
 
 (defun make-chessboard-shift (name colours)
   (make-hom-shift-from-edges name (loop :for (col-a . rest) :on colours
@@ -45,7 +67,7 @@ next to this tile."))
 
 (defmethod valid-neighbour-p ((t1 hom-shift-tile) (t2 hom-shift-tile) dir)
   (declare (ignore dir))
-  (member (colour t2) (valid-neighbours t1)))
+  (member (vertex-name t2) (valid-neighbours t1)))
 
 (defmethod make-rotated-tile ((tile hom-shift-tile) turns)
   (declare (ignore turns))

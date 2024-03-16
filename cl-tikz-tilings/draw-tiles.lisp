@@ -21,10 +21,14 @@
        (format t "~A -- ~A" br tl))
      (draw-square (- x d) (- y d) :size size :options '(thin)))))
 
-(defun draw-tiling (tiling)
+(defun draw-tiling (tiling &key with-grid grid-options)
   "Draw the tiling corresponding to TILING."
   (dotiling (pos tile) tiling
     (funcall (draw-function tile) pos))
-  ;; (draw-grid -1/2 -1/2 m n
-  ;;            :options '(thin)))
-  )
+  (when with-grid
+    (destructuring-bind (n m) (array-dimensions (surface tiling))
+      (draw-grid -1/2 -1/2 (+ m 1/2) (+ n 1/2)
+                 :options '(thick)
+                 :grid-options (list* (cons 'xshift "-0.5cm")
+                                      (cons 'yshift "-0.5cm")
+                                      grid-options)))))
