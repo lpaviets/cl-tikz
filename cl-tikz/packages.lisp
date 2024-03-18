@@ -26,6 +26,7 @@
    #:with-mirror
    #:with-reset-transformation
    ;; Drawing
+   #:with-3d-p
    #:point-str))
 
 (defpackage #:org.numbra.cl-tikz

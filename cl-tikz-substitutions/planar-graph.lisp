@@ -47,8 +47,8 @@ Each key is an edge type, and the values are lists of edges.")
           (colours-table (make-hash-table :test 'eq
                                           :size (length colours)))
           factor root)
-      (loop :for (vertex x y) :in vertices
-            :do (setf (gethash vertex vertices-table) (point x y))
+      (loop :for (vertex x y z) :in vertices
+            :do (setf (gethash vertex vertices-table) (point x y z))
             :maximize x :into max-x
             :minimize x :into min-x
             :maximize y :into max-y
@@ -56,7 +56,8 @@ Each key is an edge type, and the values are lists of edges.")
             :when (= 0 x y)
               :do (setf root vertex)
             :finally (setf factor (point (1+ (- max-x min-x))
-                                         (1+ (- max-y min-y)))))
+                                         (1+ (- max-y min-y))
+                                         1)))
       (loop :for edge :in edges
             :do (setf (gethash edge edges-table) t))
       (loop :for (type . subst) :in substitution
@@ -224,10 +225,11 @@ Each key is an edge type, and the values are lists of edges.")
 (defun draw-vertex-1 (vertex)
   (with-accessors ((pos pos))
       vertex
-    (draw-node (+ (random 0.35) (point-x pos)) (+ (random 0.35) (point-y pos))
-               :name (vertex-node-name vertex) ;; to correct
-               :options (make-options :circle t
-                                      :|inner sep| "2pt"))))
+    (let ((noise (point (random 0.35) (random 0.35) 0)))
+      (draw-node pos;; (point+ pos noise)
+                 :name (vertex-node-name vertex) ;; to correct
+                 :options (make-options :circle t
+                                        :|inner sep| "2pt")))))
 
 (defun edge-colour (edge graph)
   (gethash (edge-type edge) (graph-colours graph)))

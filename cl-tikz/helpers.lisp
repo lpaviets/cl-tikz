@@ -25,15 +25,18 @@
        (format t ";~%"))))
 
 (defmacro with-math (&body body)
-  `(if *math-mode-p*
-       (progn ,@body)
-       (let ((*math-mode-p* t))
-         (format t "\\[")
-         ,@body
-         (format t "~%\\]"))))
+  (with-gensyms (fun)    ; avoids repeating @body twice in source code
+    `(flet ((,fun ()
+              ,@body))
+       (if *math-mode-p*
+           (,fun)
+           (let ((*math-mode-p* t))
+             (format t "\\[~%")
+             (,fun)
+             (format t "~&\\]"))))))
 
 (defun preamble (&key (documentclass :standalone) packages)
-  "Write the preabme of the file.
+  "Write the preamble of the file.
 PACKAGES is a list of cons cells, of the form
 (PACKAGE-NAME . OPT-ARGS)
 where PACKAGE-NAME is either a keyword or a list of one element
@@ -58,6 +61,7 @@ where OPT-ARGS is a list formatted as in `format-options'"
                  :mand-args '(arrows
                               shapes
                               decorations.markings
+                              3d
                               decorations.pathmorphing)))
 
 (defmacro with-preamble-to-file ((filename &key (documentclass :standalone) packages)

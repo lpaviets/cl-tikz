@@ -41,10 +41,7 @@
        (or (not up)
            (valid-neighbour-p tile up :up))))
 
-;; TODO: Add a way to define a product tileset for two SFTs
-;; May be only for Wang tiles for now ?
-;; With current architecture, tiles have a class, might need to give the product one a class inheriting from both ...
-
+;; TODO May be find a way to refer to layers by name ?
 (defun make-product-tileset (name keep-tile-fun &rest tilesets)
   (labels ((cartesian-product (lists)
              (cond

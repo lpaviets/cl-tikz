@@ -81,23 +81,24 @@
           (point-str xmax ymax)))
 
 
-
-(defun %node (x y &key name label)
-  (format t " ~@[(~A)~] at ~A {~@[~A~]}" name (point-str x y) label))
-(defun draw-node (x y &key options name label)
+(defun %node (point &key name label)
+  (with-point (x y z) point
+    (format t " ~@[(~A)~] at ~A {~@[~A~]}" name (point-str x y z) label)))
+(defun draw-node (point &key options name label)
   (with-tikz-command (:node :options (cons 'draw options))
-    (%node x y :name name :label label)))
-(defun fill-node (x y &key options name label)
+    (%node point :name name :label label)))
+(defun fill-node (point &key options name label)
   (with-tikz-command (:fill :options options)
-    (%node x y :name name :label label)))
+    (%node point :name name :label label)))
 (export '(draw-node nil) (find-package "ORG.NUMBRA.CL-TIKZ"))
 ;; (defshape node (x y) (name label)
 ;;     (:clip nil)
 ;;   (format t " ~@[(~A)~] at ~A {~@[~A~]}" name (point-str x y) label))
 
-(defun add-node (x y &key name label options)
-  (with-tikz-command (:node :options options)
-    (format t " ~@[(~A)~] at ~A {~@[~A~]}" name (point-str x y) label)))
+(defun add-node (point &key name label options)
+  (with-point (x y z) point
+   (with-tikz-command (:node :options options)
+     (format t " ~@[(~A)~] at ~A {~@[~A~]}" name (point-str x y z) label))))
 
 (defun draw-square (xmin ymin &key (size 1) options)
   (let ((xmax (+ xmin size))
@@ -142,9 +143,12 @@
                     points)
             cycle)))
 
+(defvar *pgfmath-random-seed* 12345)
+(defvar *random-crop-seed* *pgfmath-random-seed*)
+
 (defmacro with-random-crop ((xmin ymin xmax ymax &key (step 2)) &body body)
   `(with-env (:scope)
-     (latex-command :pgfmathsetseed :mand-args (list 12345))
+     (latex-command :pgfmathsetseed :mand-args (list *random-crop-seed*))
      (draw-rectangle ,xmin ,ymin ,xmax ,ymax
                      :options
                      (make-options :decoration

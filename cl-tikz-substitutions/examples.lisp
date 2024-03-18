@@ -138,10 +138,10 @@
 ;; Unclear if it works
 (defparameter *lamplighter* (def-graph-substitution
                               :vertices
-                              (u 0 0)
-                              (v -1 2)
-                              (w 1 2)
-                              (x 0 1)
+                              (u 0 0 0)
+                              (v -1 2 1)
+                              (w 1 2 1)
+                              (x 0 1 2)
                               :edges
                               (u v a)
                               (u w b)

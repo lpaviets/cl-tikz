@@ -41,8 +41,8 @@ some extra parameters ARG1 ... ARGN.")
   `(let ((*transformations* nil))
      ,@body))
 
-(defmacro with-shift ((x y) &body body)
-  `(with-transformation (:shift (point ,x ,y))
+(defmacro with-shift ((x y &optional (z 0)) &body body)
+  `(with-transformation (:shift (point ,x ,y ,z))
      ,@body))
 
 (defun point-mirror (point pt-a pt-b)
@@ -81,11 +81,11 @@ some extra parameters ARG1 ... ARGN.")
   ;;         :initial-value point)
   )
 
-(defun point-absolute-point (x y)
-  (apply-transformations (point x y)))
+(defun point-absolute-point (x y &optional z)
+  (apply-transformations (point x y z)))
 
-(defun point-str (x y)
-  "Format the point #S(POINT :X X :Y Y) as a string, after
+(defun point-str (x y &optional z)
+  "Format the point #S(POINT :X X :Y Y :Z Z) as a string, after
 having rotated it according to *ROTATION-CENTER* and *ROTATION-ANGLE*
 See `point-to-tikz' for details on the output string"
-  (point-to-tikz (point-absolute-point x y)))
+  (point-to-tikz (point-absolute-point x y z)))
