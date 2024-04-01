@@ -9,36 +9,35 @@
 ;; Idea: one variable per tile per position: the variable xijt is true if the
 ;; tile t appears at pos (i, j)
 
-(ql:quickload :cl-ppcre)
-(ql:quickload :cl-sat.glucose)
+;; May be some functions ought to be in LOGIC.LISP instead ?
 
-(defun valid-pairs-up-right (tileset)
-  (let ((valid-up (make-hash-table))
-        (valid-right (make-hash-table)))
-    (dotiles (t1 tileset)
-      (dotiles (t2 tileset)
-        (when (valid-neighbour-p t1 t2 :up)
-          (push t2 (gethash t1 valid-up)))
-        (when (valid-neighbour-p t1 t2 :right)
-          (push t2 (gethash t1 valid-right)))))
-    (cons valid-up valid-right)))
+;;; Utils
+(defun tiles-same-neighbours (tileset dir &optional mappings)
+  "Return a hash-table of equivalent tiles.
 
-(defun mappings-tileset-to-num (tileset)
-  (let ((tiles->num (make-hash-table))
-        (num->tiles (make-hash-table))
-        (i 0))
-    (dotiles (tile tileset)
-      (setf (gethash tile tiles->num) i)
-      (setf (gethash i num->tiles) tile)
-      (incf i))
-    (cons tiles->num num->tiles)))
+Keys are the list of neighbours, mapped by mappings to numbers.
+
+Values are lists of tiles whose neighbours in direction DIR are the
+corresponding key of the table."
+  ;; TODO: fix when mappings is nil
+  (assert mappings)
+  (flet ((tile-to-neighbours-set-dir (tile)
+           (sort (loop :for nghb :in (set-to-list (all-valid-neighbours tileset tile dir))
+                       :collect (mappings-tile-to-num nghb mappings))
+                 #'<)))
+    (let ((equivalents (make-hash-table :test 'equalp)))
+      (dotiles (tile tileset)
+        (let ((neighbours-set (tile-to-neighbours-set-dir tile)))
+          (push (mappings-tile-to-num tile mappings) (gethash neighbours-set equivalents))))
+      equivalents)))
 
 (defun var-i-j-tile (i j tile &optional mappings)
   (symb i "-" j "-" (if mappings
-                        (gethash tile (car mappings))
+                        (mappings-tile-to-num tile mappings)
                         tile)))
 
-(defun clause-ij (i j tiles &optional mappings)
+;;; Clause generation
+(defun make-clause-ij (i j tiles &optional mappings)
   (cons 'or
         (loop :with ij-tiles = (mapcar (lambda (tile)
                                          (var-i-j-tile i j tile mappings))
@@ -47,14 +46,14 @@
               :collect `(and ,tile
                              (not (or ,@(remove tile ij-tiles)))))))
 
-(defun one-tile-per-pos (n m tiles &optional mappings)
+(defun make-clauses-one-tile-per-pos (m n tiles &optional mappings)
   (let (clauses)
-    (dotimes (i n)
-      (dotimes (j m)
-        (push (clause-ij i j tiles mappings) clauses)))
+    (dotimes (i m)
+      (dotimes (j n)
+        (push (make-clause-ij i j tiles mappings) clauses)))
     (cons 'and clauses)))
 
-(defun clauses-prefilled-tiling (tiling &optional mappings)
+(defun make-clauses-prefilled-tiling (tiling &optional mappings)
   (let ((clauses nil))
     (dotiling (pos tile) tiling
       (when tile
@@ -62,38 +61,39 @@
           (push (var-i-j-tile y x tile mappings) clauses))))
     (cons 'and clauses)))
 
+(defun make-clause-neighbours (i j tileset dir &optional mappings)
+  (let ((equivalents (tiles-same-neighbours tileset dir mappings))
+        (clause nil)
+        (next-i (if (eq dir :right) (1+ i) i))
+        (next-j (if (eq dir :right) j (1+ j))))
+    (dohash (neighbours here) equivalents
+      ;; Tiles have alread gone through MAPPINGS: no need to re-do it here
+      (let ((at-pos (cons 'or (loop :for num :in here
+                                    :collect (var-i-j-tile i j num))))
+            (at-next (cons 'or (loop :for num :in neighbours
+                                     :collect (var-i-j-tile next-i next-j num)))))
+        (push `(or (not ,at-pos)
+                   ,at-next)
+              clause)))
+    (cons 'and clause)))
+
 (defun clauses-from-tiling (tiling &optional mappings)
   ;; Assumes that tileset is a hom-shift, no checks
-  (destructuring-bind (n m) (tiling-dimensions tiling)
+  (destructuring-bind (m n) (tiling-dimensions tiling)
     (let* ((tileset (tileset tiling))
            (tiles (set-to-list (tileset-tiles tileset)))
-           (clauses (list (clauses-prefilled-tiling tiling mappings)
-                          (one-tile-per-pos n m tiles mappings)))
-           (extra-rules (extra-rules tileset))
-           (valid-pairs (valid-pairs-up-right tileset))
-           (valid-pairs-up (car valid-pairs))
-           (valid-pairs-right (cdr valid-pairs)))
-      (dotimes (i n)
-        (dotimes (j m)
-          (when (< i (1- n))
-            (dotiles (tile tileset)
-              ;; If tile A in (I, J), want some allowed neighbour B in (I+1, J)
-              ;; Can be rephrased as: IF A-I-J, THEN SOME B-I+1-J
-              ;; Logically equivalent to:
-              ;; NOT A-I-J OR SOME B-I-J
-              (push `(or (not ,(var-i-j-tile i j tile mappings))
-                         ,@(loop :for neighbour :in (gethash tile valid-pairs-up) ; up or right ?!
-                                 :collect (var-i-j-tile (1+ i) j neighbour mappings)))
-                    clauses)))
-          (when (< j (1- m))
-            (dotiles (tile tileset)
-              (push `(or (not ,(var-i-j-tile i j tile mappings))
-                         ,@(loop :for neighbour :in (gethash tile valid-pairs-right) ; up or right ?!
-                                 :collect (var-i-j-tile i (1+ j) neighbour mappings)))
-                    clauses)))))
+           (clauses (list (make-clauses-prefilled-tiling tiling mappings)
+                          (make-clauses-one-tile-per-pos m n tiles mappings)))
+           (extra-rules (extra-rules tileset)))
+      (dotimes (i m)
+        (dotimes (j n)
+          (when (< i (1- m))
+            (push (make-clause-neighbours i j tileset :right mappings) clauses))
+          (when (< j (1- n))
+            (push (make-clause-neighbours i j tileset :up mappings) clauses))))
       (when extra-rules
-        (dotimes (i n)
-          (dotimes (j m)
+        (dotimes (i m)
+          (dotimes (j n)
             (push (funcall extra-rules i j mappings) clauses))))
       (cons 'and clauses))))
 
@@ -111,9 +111,11 @@
                                             (#'parse-integer j)
                                             (#'parse-integer num))
                    ("^\(\\d+\)-\(\\d+\)-\(.*\)$" (symbol-name var))
-                 (let ((tile-at-i-j (gethash num (cdr mappings)))
-                       (pos (point j i)))
+                 (let ((tile-at-i-j (mappings-num-to-tile num mappings))
+                       (pos (point i j)))
                    (when (tiling-in-bounds-p pos copied-tiling)
+                     ;; Might happen that we use variables OUTSIDE of the
+                     ;; tiling, in particular, when using extra-rules.
                      (setf (tiling-tile-at pos copied-tiling) tile-at-i-j))))))
         (mapc #'set-tile-from-solution solution))
       copied-tiling)))

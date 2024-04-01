@@ -11,6 +11,7 @@
                (:file "wang-tiles")
                (:file "tileset")
                (:file "topology")
+               (:file "logic")
                (:file "tiling")
                (:file "hom-shift")
                (:file "draw-tiles")

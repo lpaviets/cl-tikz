@@ -88,7 +88,7 @@ pair (COLOUR . T), it will be coloured with the colour named U."
   (let ((new-cycle (copy-list cycle))
         (tileset (tileset tiling)))
     (setf (cdr (last new-cycle)) new-cycle)
-    (destructuring-bind (height width) (tiling-dimensions tiling)
+    (destructuring-bind (width height) (tiling-dimensions tiling)
       (declare (ignore height))
       (loop :for x :below width
             :for vertex :in new-cycle

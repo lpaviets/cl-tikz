@@ -26,7 +26,7 @@
   (dotiling (pos tile) tiling
     (funcall (draw-function tile) pos))
   (when with-grid
-    (destructuring-bind (n m) (tiling-dimensions tiling)
+    (destructuring-bind (m n) (tiling-dimensions tiling)
       (draw-grid 0 0 m n
                  :options '(thick)
                  :grid-options (list* (cons 'xshift "-0.5cm")

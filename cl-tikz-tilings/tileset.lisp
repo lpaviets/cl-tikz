@@ -12,6 +12,7 @@
           :type hash-table)
    (extra-rules :initarg :rules
                 :accessor extra-rules
+                :type rule
                 :documentation "Extra-rules that are not checked by TILES themselves.
 
 A clause, suitable for sat-solvers. It has to - and will - be checked at every

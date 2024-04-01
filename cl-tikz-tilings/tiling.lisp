@@ -49,7 +49,7 @@ tiles an WIDTHxHEIGHT torus."
   (funcall (bounds tiling) pos))
 
 (defun tiling-dimensions (tiling)
-  (array-dimensions (%content (topology tiling))))
+  (reverse (array-dimensions (%content (topology tiling)))))
 
 (defun tiling-tile-at (pos tiling &key out-of-bounds no-check)
   "Return the tile at position POS in TILING.
@@ -80,7 +80,7 @@ Starts at the bottom-left corner (pos (0, 0)), and iterates row-wise.
 Wraps the iteration in a block called BLOCK-NAME"
   (with-gensyms (height h width w (gtiling tiling) oob)
     `(block ,block-name
-       (destructuring-bind (,height ,width) (tiling-dimensions ,gtiling)
+       (destructuring-bind (,width ,height) (tiling-dimensions ,gtiling)
          (loop :for ,h :below ,height :do
            (loop :for ,w :below ,width
                  :for ,pos = (point ,w ,h)

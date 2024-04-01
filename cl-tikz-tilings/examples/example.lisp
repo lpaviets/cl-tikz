@@ -3,7 +3,7 @@
 (defparameter *examples-directory*
   #P"output-examples/")
 
-(defun gen-example-tiling (tileset m n &key (solver 'solve-naive) (crop t) (with-grid t) (preprocess nil))
+(defun gen-example-tiling (tileset m n &key (solver 'solver-sat) (crop t) (with-grid t) (preprocess nil))
   "Generate a random solution using TILESET for a grid of size MxN.
 
 Ther resulting .tex file is stored in the directory `*examples-directory*'.
@@ -33,7 +33,7 @@ value of the tiling."
               (draw-tiling solution :with-grid with-grid)))))
     solution))
 
-(defun gen-example-periodic (tileset m n &key (solver 'solve-naive) (crop t) (with-grid t))
+(defun gen-example-periodic (tileset m n &key (solver 'solver-sat) (crop t) (with-grid t))
   (let* ((filename (merge-pathnames (format nil "test-periodic-~A-~Dx~D.tex"
                                             (tileset-name tileset)
                                             m n)
