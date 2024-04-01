@@ -8,7 +8,14 @@
 
 ;; Most of the time, BY FAR, is spent printing the CNF to the file given to
 ;; Glucose as input.
-;; TODO: try to be faster ?
+;; This version fixes:
+;; - MUCH faster solving due to fixing the bad PRINT-CNF implementation
+;; -> Use a hash-table instead of a list for lookup
+;; - Uses glucose-parallel, which is faster
+;; - Fixes glucose parallel outputs: the actual program is buggy, so we:
+;;   - print everything to stdout
+;;   - redirect stdout to a file
+;;   - use SED to clean-up: send to (actual) stdout the commentaries, and keep only the code in the result file
 (setf *glucose-home* "/home/aminumbra/from_source/glucose/")
 
 (defun glucose-binary (&optional (*glucose-home* *glucose-home*))
@@ -53,7 +60,9 @@
          ;;         :while line
          ;;         :do (format t line)
          ;;             (terpri)))
-         (let ((fix-result-command (format nil "cd ~a; sed -i -e '/^v/!d; s/^v //' ~a"
+         (let ((fix-result-command (format nil "cd ~a;~
+                                                sed -n -e '/^[cs].*$/p' ~a;~
+                                                sed -i -e '/^v/!d; s/^v //' ~:*~a"
                                            (namestring dir)
                                            "result")))
            (uiop:run-program fix-result-command
