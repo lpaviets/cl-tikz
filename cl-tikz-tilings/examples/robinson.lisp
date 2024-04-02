@@ -290,3 +290,26 @@ The rule is that two parity tiles can't be placed next to each other.")
                      ,(some-specials-var i (1+ j) mappings)
                      ,(some-specials-var (1+ i) (1+ j) mappings)))))
       (make-tileset 'robinson robinson-tiles #'rules))))
+
+;; Speeds up by quite a margin; no real interface to use this yet, just unroll
+;; SOLVER-SAT by hand to test.
+(defun make-clauses-robinson-prefill-corners (tiling &optional mappings)
+  (let ((corners nil)
+        (clause nil))
+    (dotiles (tile (tileset tiling))
+      (when (and (cornerp tile)
+                 (not (parity tile)))
+        (push tile corners)))
+    (destructuring-bind (m n) (tiling-dimensions tiling)
+      (loop :with k  = 4
+            :for offset = (truncate k 2)
+            :while (< k (max m n))
+            :do (loop :for i :from offset :below m :by k
+                      :do (loop :for j :from offset :below n :by k
+                                :do (push (cons 'or
+                                                (loop :for corner :in corners
+                                                      :for corner-mapping = (var-i-j-tile i j corner mappings)
+                                                      :collect corner-mapping))
+                                          clause)))
+                (setf k (* 2 k))))
+    (cons 'and clause)))
