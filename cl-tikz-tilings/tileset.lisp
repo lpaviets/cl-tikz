@@ -24,6 +24,16 @@ Must be defined by `def-extra-rules', which see.")))
   `(dohash (,tile) (tileset-tiles ,tileset)
      ,@body))
 
+(defmethod initialize-instance :after ((tileset tileset) &key)
+  (dotiles (tile tileset)
+    ;; TOD0: clean this up
+    (assert (or (not (slot-boundp tile 'tileset))
+                (eq tileset (slot-value tile 'tileset))
+                (eq (tileset-name tileset) (slot-value tile 'tileset)))
+            nil "Tile ~S is already part of the tileset ~S"
+            tile (tileset tile))
+    (setf (tileset tile) tileset)))
+
 (defun make-tileset (name tiles &optional rules)
   (make-instance 'tileset :name name :tiles tiles :rules rules))
 

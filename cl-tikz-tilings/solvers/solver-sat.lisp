@@ -53,10 +53,10 @@ corresponding key of the table."
         (push (make-clause-ij i j tiles mappings) clauses)))
     (cons 'and clauses)))
 
-(defun make-clauses-prefilled-tiling (tiling &optional mappings)
+(defun make-clauses-prefilled-tiling (tiling &optional mappings (except :default))
   (let ((clauses nil))
     (dotiling (pos tile) tiling
-      (when tile
+      (when (and tile (not (eq tile except)))
         (with-point (x y) pos
           (push (var-i-j-tile y x tile mappings) clauses))))
     (cons 'and clauses)))

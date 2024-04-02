@@ -16,7 +16,9 @@
 ;;   - print everything to stdout
 ;;   - redirect stdout to a file
 ;;   - use SED to clean-up: send to (actual) stdout the commentaries, and keep only the code in the result file
-(setf *glucose-home* "/home/aminumbra/from_source/glucose/")
+
+(setf *glucose-home* (merge-pathnames #p"from_source/glucose/"
+                                      (user-homedir-pathname)))
 
 (defun glucose-binary (&optional (*glucose-home* *glucose-home*))
   (merge-pathnames "parallel/glucose-syrup" *glucose-home*))

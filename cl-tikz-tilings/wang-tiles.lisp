@@ -1,23 +1,27 @@
 (in-package #:org.numbra.cl-tikz-tilings)
 
 ;;; Tiles
-
+;;; TODO: move drawing-function one step higher (to the tileset ?)
+;;; Idea: for /some/ SFTs, tiles are "always" draw the same way
+;;; We can have each tile's drawing function be "call the tileset function"
+;;; and the tileset function does the actual work.
 (defclass tile ()
   ((tileset :initarg :tileset
-            :reader tileset
-            :type (or tileset symbol)
+            :accessor tileset
+            :type tileset
             :documentation "The tileset to which this tile belongs")
    (draw-function :initarg :draw-function
                   :accessor draw-function
                   :type function
                   :documentation "Function of one argument, a POINT (X, Y),
- used to draw the tile at the position (X, Y)
-A tile has to implement the following methods to be used in the solver:
+ used to draw the tile at the position (X, Y)."))
+  (:documentation "A tile has to implement the following methods to be used in the solver:
 - VALID-NEIGHBOUR-P
+
 A class deriving from TILE can also implement the following helper methods
 to be able to define tiles more easily:
 - MAKE-ROTATED-TILE
-- MAKE-TILE-DRAWING-FUNCTION"))
+- MAKE-TILE-DRAWING-FUNCTION")
   (:default-initargs
    :tileset (error "A tileset is required for each Wang tile")))
 

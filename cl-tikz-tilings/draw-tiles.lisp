@@ -24,7 +24,8 @@
 (defun draw-tiling (tiling &key with-grid grid-options)
   "Draw the tiling corresponding to TILING."
   (dotiling (pos tile) tiling
-    (funcall (draw-function tile) pos))
+    (when (and tile (typep tile 'tile))
+      (funcall (draw-function tile) pos)))
   (when with-grid
     (destructuring-bind (m n) (tiling-dimensions tiling)
       (draw-grid 0 0 m n
