@@ -64,8 +64,14 @@ corresponding key of the table."
 (defun make-clause-neighbours (i j tileset dir &optional mappings)
   (let ((equivalents (tiles-same-neighbours tileset dir mappings))
         (clause nil)
-        (next-i (if (eq dir :right) (1+ i) i))
-        (next-j (if (eq dir :right) j (1+ j))))
+        (next-i (case dir
+                  (:right (1+ i))
+                  (:left (1- i))
+                  (t i)))
+        (next-j (case dir
+                  (:up (1+ j))
+                  (:down (1- j))
+                  (t j))))
     (dohash (neighbours here) equivalents
       ;; Tiles have alread gone through MAPPINGS: no need to re-do it here
       (let ((at-pos (cons 'or (loop :for num :in here
@@ -89,8 +95,12 @@ corresponding key of the table."
         (dotimes (j n)
           (when (< i (1- m))
             (push (make-clause-neighbours i j tileset :right mappings) clauses))
+          (when (< 0 i)
+            (push (make-clause-neighbours i j tileset :left mappings) clauses))
           (when (< j (1- n))
-            (push (make-clause-neighbours i j tileset :up mappings) clauses))))
+            (push (make-clause-neighbours i j tileset :up mappings) clauses))
+          (when (< 0 j)
+            (push (make-clause-neighbours i j tileset :left mappings) clauses))))
       (when extra-rules
         (dotimes (i m)
           (dotimes (j n)
