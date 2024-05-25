@@ -7,9 +7,12 @@
 (defparameter *incoming-edges* (make-hash-table))
 (defparameter *outgoing-edges* (make-hash-table))
 
-(defun reset-subst (&optional (graph *lamplighter*) (n 6))
+(defun reset-subst (&optional (graph *lamplighter*) (n 6) initial)
+  (setf *representatives* (make-hash-table)
+        *vertices* nil
+        *origin* nil)
   (multiple-value-setq (*vertices* *edges*)
-    (n-substitute-graph graph n))
+    (n-substitute-graph graph n :initial initial))
   (setf *incoming-edges* (make-hash-table)
         *outgoing-edges* (make-hash-table))
   (loop :for edge :in *edges*
@@ -40,6 +43,7 @@
     (loop :for u = v :then new-u
           :for new-u = (get-next u 'i :in)
           :while new-u
+          :do (assert (eq (vertex-type u) (vertex-type new-u)))
           :finally (setf (gethash v *representatives*) u))))
 
 (defun get-representative (v)
@@ -83,13 +87,13 @@
       (dohash (v v-edges) out
         (setf edges (nconc v-edges edges)))
       (dolist (v vertices)
-        (draw-vertex-1 v))
+        (draw-vertex-1 v graph))
       (dolist (e edges)
         (draw-graph-edge e graph)))))
 
-(defun draw-collapsed-in-file (graph name n)
-  (reset-subst graph n)
-  (let ((file (merge-pathnames (format nil "examples/~A-~A.tex" name n))))
+(defun draw-collapsed-in-file (graph name n &optional initial)
+  (reset-subst graph n initial)
+  (let ((file (merge-pathnames (format nil "examples/~A-~A-~A.tex" name n (if initial "col" "nocol")))))
     (format t "~&Writing to file ~A~%" file)
     (with-preamble-to-file (file) ()
       (with-env (:tikzpicture)

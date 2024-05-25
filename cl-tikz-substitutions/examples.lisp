@@ -136,6 +136,19 @@
                             (diag red)))
 
 ;; Unclear if it works
+;;
+;;Some data: When "collapsed", i.e., identifying vertices linked by a i edge
+;; (and the implications of this identification), we obtain the following
+;; sequence of "number of vertices" in the resulting graph:
+;;
+;; 0, 1, 4, 12, 32, 80, 192, 448, 1024, 2304, 5120 ... etc
+;;
+;; which is exactly a(n) = n*2^(n-1).
+;;
+;; OTOH, actual growth rate of the lamplighter for the standard presentation
+;; (not the one I use here !)
+;;
+;; 1, 3, 6, 12, 22, 40, 71, 123, 212, 360, 607,
 (defparameter *lamplighter* (def-graph-substitution
                               :vertices
                               (u 0 0 0)
@@ -154,7 +167,10 @@
                               :colours
                               (a blue)
                               (b green)
-                              (i red)))
+                              (i red)
+                              :colours-substitution
+                              (a (u a) (v a) (w b) (x b))
+                              (b (u a) (v a) (w b) (x b))))
 
 ;;;; Geometric
 (defparameter *chair*

@@ -91,7 +91,8 @@ in it.")))
                         :cycle t
                         :options options)))))
 
-(defmethod draw-substitution ((shape shape-substitution) n)
+(defmethod draw-substitution ((shape shape-substitution) n &key initial)
+  (declare (ignore initial))
   (if (= n 1)
       (draw-polygon (shape-initial shape))
       (with-accessors ((factor expansion-factor)

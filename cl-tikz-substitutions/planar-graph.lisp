@@ -16,13 +16,13 @@
    (vertices :reader graph-vertices
              :initarg :vertices
              :type hash-table
-             :documentation "Hash table of vertices. Keys are their name,
-and values are their position, as a POINT")
+             :documentation "Hash table of vertices. Keys are their name,and values are their position, as a
+POINT")
    (edges :reader graph-edges
           :initarg :edges
           :type hash-table
-          :documentation "Set of edges. Each edge is a list of 3 elements,
-the name of its two endpoints and its type")
+          :documentation "Set of edges. Each edge is a list of 3 elements,the name of its two endpoints
+and its type")
    (substitution :reader graph-substitution
                  :initarg :substitution
                  :type hash-table
@@ -31,13 +31,16 @@ Each key is an edge type, and the values are lists of edges.")
    (expansion-factor :reader expansion-factor
                      :initarg :factor
                      :type point)
+   (colours-substitution :reader graph-colours-substitution
+                         :initarg :colours-substitution
+                         :type hash-table)
    (colours :reader graph-colours
             :initarg :colours
             :type hash-table
-            :documentation "Hash table mapping edge types to TikZ colours")))
+            :documentation "Hash table mapping edges or vertices types to TikZ colours")))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (defun make-graph-substitution (&key vertices edges substitution colours)
+  (defun make-graph-substitution (&key vertices edges substitution colours colours-substitution)
     (let ((vertices-table (make-hash-table :test 'eq
                                            :size (length vertices)))
           (edges-table (make-hash-table :test 'equal
@@ -46,6 +49,8 @@ Each key is an edge type, and the values are lists of edges.")
                                         :size (length substitution)))
           (colours-table (make-hash-table :test 'eq
                                           :size (length colours)))
+          (colours-subst-table (make-hash-table :test 'eq
+                                                :size (length vertices)))
           factor root)
       (loop :for (vertex x y z) :in vertices
             :do (setf (gethash vertex vertices-table) (point x y z))
@@ -64,16 +69,19 @@ Each key is an edge type, and the values are lists of edges.")
             :do (setf (gethash type subst-table) subst))
       (loop :for (type colour) :in colours
             :do (setf (gethash type colours-table) colour))
+      (loop :for (v . col-subst-v) :in colours-substitution
+            :do (setf (gethash v colours-subst-table) col-subst-v))
       (make-instance 'graph-substitution
                      :vertices vertices-table
                      :edges edges-table
                      :substitution subst-table
+                     :colours-substitution colours-subst-table
                      :colours colours-table
                      :factor factor
                      :root root))))
 
 (defmacro def-graph-substitution (&body description)
-  (let ((keywords '(:vertices :edges :substitution :colours)))
+  (let ((keywords '(:vertices :edges :substitution :colours :colours-substitution)))
     (assert (member (car description) keywords)
             nil
             "Malformed description: should start with a valid keyword, not ~S"
@@ -85,7 +93,8 @@ Each key is an edge type, and the values are lists of edges.")
           :vertices ',(extract-argument :vertices splitted)
           :edges ',(extract-argument :edges splitted)
           :substitution ',(extract-argument :substitution splitted)
-          :colours ',(extract-argument :colours splitted))))))
+          :colours ',(extract-argument :colours splitted)
+          :colours-substitution ',(extract-argument :colours-substitution splitted))))))
 
 (defclass vertex ()
   ((pos :accessor pos
@@ -93,10 +102,12 @@ Each key is an edge type, and the values are lists of edges.")
         :type point)
    (name :reader name
          :initarg :name
-         :type symbol)))
+         :type symbol)
+   (type :reader vertex-type
+         :initarg :type)))
 
-(defun vertex (name pos)
-  (make-instance 'vertex :pos pos :name name))
+(defun vertex (name pos &optional type)
+  (make-instance 'vertex :pos pos :name name :type type))
 
 (defclass edge ()
   ((start :accessor edge-start
@@ -115,6 +126,13 @@ Each key is an edge type, and the values are lists of edges.")
 
 ;; Convention: a 1-substitution is the prototile graph
 ;; A 0-substitution makes no sense
+
+(defun vertex-col-in-subst-of (new-v from-col graph)
+  (when from-col
+    (let* ((all-col-subst (graph-colours-substitution graph))
+           (from-col-subst (gethash from-col all-col-subst))
+           (new-v-col (second (assoc new-v from-col-subst))))
+      new-v-col)))
 
 (defun vertex-pos-in-graph (name graph)
   (gethash name (graph-vertices graph)))
@@ -137,7 +155,9 @@ Each key is an edge type, and the values are lists of edges.")
       (let (new-vertices
             new-edges)
         (dohash (v) vertices
-          (push (vertex v (vertex-pos-in-substitution pos v graph))
+          (push (vertex v
+                        (vertex-pos-in-substitution pos v graph)
+                        (vertex-col-in-subst-of v (vertex-type vertex) graph))
                 new-vertices))
         (dohash (edge) edges
           (destructuring-bind (beg end type) edge
@@ -165,7 +185,7 @@ Each key is an edge type, and the values are lists of edges.")
                 (push (edge new-beg new-end subst-type) new-edges))))
           new-edges)))))
 
-(defun 1-substitute-graph (graph)
+(defun 1-substitute-graph (graph &key initial)
   (with-accessors ((vertices graph-vertices)
                    (edges graph-edges))
       graph
@@ -173,7 +193,7 @@ Each key is an edge type, and the values are lists of edges.")
           1-vertices
           1-edges)
       (dohash (v pos) vertices
-        (let ((new-v (vertex v pos)))
+        (let ((new-v (vertex v pos (vertex-col-in-subst-of v initial graph))))
           (push new-v 1-vertices)
           (setf (gethash v table) new-v)))
       (dohash (edge) edges
@@ -184,16 +204,16 @@ Each key is an edge type, and the values are lists of edges.")
                 1-edges)))
       (values 1-vertices 1-edges))))
 
-(defun n-substitute-graph (graph n)
+(defun n-substitute-graph (graph n &key initial)
   (with-accessors ((vertices graph-vertices)
                    (edges graph-edges)
                    (factor expansion-factor)
                    (subst graph-substitution))
       graph
     (if (= n 1)
-        (1-substitute-graph graph)
+        (1-substitute-graph graph :initial initial)
         (multiple-value-bind (n-1-vertices n-1-edges)
-            (n-substitute-graph graph (1- n))
+            (n-substitute-graph graph (1- n) :initial initial)
           (let* ((table (make-hash-table :test #'eq))
                  (subst-of-vertices
                    (loop :for v :in n-1-vertices
@@ -222,14 +242,21 @@ Each key is an edge type, and the values are lists of edges.")
   (with-point (x y) (pos vertex)
     (format nil "~A_~D_~D" (name vertex) (floor x) (floor y))))
 
-(defun draw-vertex-1 (vertex)
-  (with-accessors ((pos pos))
+(defun draw-vertex-1 (vertex graph)
+  (with-accessors ((pos pos)
+                   (col vertex-type))
       vertex
-    (let ((noise (point (random 0.35) (random 0.35) 0)))
-      (draw-node pos;; (point+ pos noise)
+    (let ((noise (point (random 0.35) (random 0.35) 0))
+          (options (make-options :circle t
+                                 :|inner sep| "2pt"))
+          (tikz-col (when col
+                      (gethash col (graph-colours graph)))))
+      (declare (ignorable noise))
+      (draw-node pos                             ;; (point+ pos noise)
                  :name (vertex-node-name vertex) ;; to correct
-                 :options (make-options :circle t
-                                        :|inner sep| "2pt")))))
+                 :options (if tikz-col
+                              (cons `(:fill . ,tikz-col) options)
+                              options)))))
 
 (defun edge-colour (edge graph)
   (gethash (edge-type edge) (graph-colours graph)))
@@ -244,9 +271,9 @@ Each key is an edge type, and the values are lists of edges.")
                :->
                :options (edge-colour edge graph))))
 
-(defmethod draw-substitution ((graph graph-substitution) n)
-  (multiple-value-bind (vertices edges) (n-substitute-graph graph n)
+(defmethod draw-substitution ((graph graph-substitution) n &key initial)
+  (multiple-value-bind (vertices edges) (n-substitute-graph graph n :initial initial)
     (dolist (v vertices)
-      (draw-vertex-1 v))
+      (draw-vertex-1 v graph))
     (dolist (e edges)
       (draw-graph-edge e graph))))
