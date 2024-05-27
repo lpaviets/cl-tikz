@@ -167,6 +167,8 @@
                               :colours
                               (a blue)
                               (b green)
+                              (y yellow)
+                              (p purple)
                               (i red)
                               :colours-substitution
                               (a (u a) (v a) (w b) (x b))

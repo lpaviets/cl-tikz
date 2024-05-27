@@ -31,7 +31,7 @@ Each key is an edge type, and the values are lists of edges.")
    (expansion-factor :reader expansion-factor
                      :initarg :factor
                      :type point)
-   (colours-substitution :reader graph-colours-substitution
+   (colours-substitution :accessor graph-colours-substitution
                          :initarg :colours-substitution
                          :type hash-table)
    (colours :reader graph-colours

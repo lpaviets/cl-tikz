@@ -7,6 +7,18 @@
 (defparameter *incoming-edges* (make-hash-table))
 (defparameter *outgoing-edges* (make-hash-table))
 
+(defun update-colours-substitution (graph new-colours)
+  "NEW-COLOURS is a list, each element being of the form:
+
+(COL (U1 COL1) (U2 COL2) ... (UN COLN))
+
+where U1 ... UN are vertices names, and COL, COL1 ... COLN are colours with a
+corresponding entry in (GRAPH-COLOURS GRAPH)."
+  (let ((colours-subst-table (make-hash-table :test 'eq)))
+    (loop :for (v . col-subst-v) :in new-colours
+          :do (setf (gethash v colours-subst-table) col-subst-v))
+    (setf (graph-colours-substitution graph) colours-subst-table)))
+
 (defun reset-subst (&optional (graph *lamplighter*) (n 6) initial)
   (setf *representatives* (make-hash-table)
         *vertices* nil
@@ -98,3 +110,66 @@
     (with-preamble-to-file (file) ()
       (with-env (:tikzpicture)
         (draw-collapsed graph)))))
+
+
+;; (defun num-to-fun (n from to)
+;;   (let ((base (length to))
+;;         (to-vec (coerce to 'vector)))
+;;     (loop :for u :in from
+;;           :for pick = (mod n base) :then (mod rem base)
+;;           :for rem = (truncate n base) :then (truncate rem base)
+;;           :collect (list u (aref to-vec pick)))))
+
+;; (defun test-all-substs ()
+;;   (let ((from '(u v w x))
+;;         (to '(a b p))
+;;         (max (expt 3 4))
+;;         (correct nil))
+;;     (dotimes (a (/ max 3))
+;;       (dotimes (b max)
+;;         (dotimes (p max)
+;;           (let* ((col-a `(a (u a) ,@(num-to-fun a (cdr from) to)))
+;;                  (col-b (cons 'b (num-to-fun b from to)))
+;;                  (col-p (cons 'p (num-to-fun p from to)))
+;;                  (cols (list col-a col-b col-p)))
+;;             (update-colours-substitution *lamplighter* cols)
+;;             (reset-subst *lamplighter* 3 'a)
+;;             (handler-case (compute-equivalence-classes)
+;;               (simple-error ()
+;;                 nil)
+;;               (:no-error (x) (declare (ignore x)) (push cols correct)))))))
+;;     correct))
+
+;; (defun bad-subst (subst)
+;;   (destructuring-bind ((a . sa) (b . sb) (p . sp))
+;;       subst
+;;     (let ((vals-a (mapcar 'second sa))
+;;           (vals-b (mapcar 'second sb))
+;;           (vals-p (mapcar 'second sp)))
+;;       (or (= 1 (length (remove-duplicates vals-a)))
+;;           (= 1 (length (remove-duplicates vals-b)))
+;;           (= 1 (length (remove-duplicates vals-p)))
+;;           (and (not (member a vals-b)) (not (member a vals-p)))
+;;           (and (member b vals-a) (not (member p vals-b))) ; no p
+;;           (and (member p vals-a) (not (member b vals-p))) ; no b
+;;           (equalp vals-a vals-b)
+;;           (equalp vals-a vals-p)
+;;           (equalp vals-b vals-p)))))
+
+;; Non-completely-stupid substitutions that can be iterated more than 6 or 7 times:
+;; Could be non-trivial:
+;;  ((A (U A) (V P) (W P) (X A))
+;;   (B (U B) (V A) (W A) (X B))
+;;   (P (U P) (V B) (W B) (X P)))
+
+;; (((A (U A) (V B) (W B) (X A))
+;;   (B (U B) (V P) (W P) (X B))
+;;   (P (U P) (V A) (W A) (X P)))
+
+;;  ((A (U A) (V A) (W B) (X B))
+;;   (B (U P) (V P) (W B) (X B))
+;;   (P (U A) (V A) (W B) (X B)))
+
+;;  ((A (U A) (V B) (W B) (X P))
+;;   (B (U B) (V A) (W P) (X B))
+;;   (P (U A) (V B) (W B) (X P)))
